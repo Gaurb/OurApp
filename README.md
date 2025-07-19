@@ -1,16 +1,77 @@
-# OurApp-Social-Media-
-A web application where users can chat with each other on real time.
+# OurApp Social Media
 
-Features:
-1. Login Page:
-1.1) show error on wrong information.
-1.2) navigate to the homepage after login with correct user id and password if profile Picture is set.
-1.3) navigate to the setAvatar page if profile picture is not set.
-2. Register page:
-2.1) show error on invalid inputs and wrong information.
-2.2) After creating account navigate to setAvatar page for setting profile picture of account.
-2.3) navigate to homepage after setting the profile picture.
-3. Home page:
-3.1) Logout functionality.
-3.2) chat-with user by selecting it.
-Take a look at live version: https://gaurb-ourapp.netlify.app/
+A real-time chat application where users can register, set avatars, chat with friends, and more. This project consists of a React frontend and a Spring Boot backend with WebSocket support for real-time messaging.
+
+## Features
+
+- **User Authentication**: Secure login and registration with JWT.
+- **Avatar Setting**: Users can set profile pictures after registration.
+- **Real-time Chat**: Chat with other users in real-time using WebSockets.
+- **Friend Search**: Search and add friends.
+- **Logout**: Secure logout functionality.
+- **Error Handling**: Validation and error messages for invalid inputs.
+
+Take a look at the live version: https://gaurb-ourapp.netlify.app/
+
+## Tech Stack
+
+- **Frontend**: React.js, Vite, Axios for API calls.
+- **Backend**: Spring Boot, JWT for authentication, WebSockets for real-time communication, Maven for build.
+- **Database**: (Assuming from typical Spring setup, e.g., H2 or PostgreSQL - configure in application.properties).
+- **Other**: Docker support for containerization.
+
+## Installation
+
+### Prerequisites
+- Node.js and npm/yarn for the frontend.
+- Java JDK and Maven for the backend.
+- Docker (optional for containerized deployment).
+
+### Setup
+
+1. **Clone the repository**:
+   ```
+   git clone https://github.com/your-repo/OurApp-Social-Media-.git
+   cd OurApp-Social-Media-
+   ```
+
+2. **Backend (Server)**:
+   - Navigate to `Server/` directory.
+   - Configure `src/main/resources/application.properties` for database and other settings.
+   - Build and run:
+     ```
+     mvn clean install
+     mvn spring-boot:run
+     ```
+   - Alternatively, use Docker:
+     ```
+     docker-compose up
+     ```
+
+3. **Frontend (Client)**:
+   - Navigate to `Client/` directory.
+   - Install dependencies:
+     ```
+     yarn install
+     ```
+   - Run the development server:
+     ```
+     yarn dev
+     ```
+
+The app should now be running on `http://localhost:5173` (frontend) and `http://localhost:8080` (backend API).
+
+## Usage
+
+- Register a new account on the registration page.
+- Set your avatar.
+- Login and start chatting with other users.
+- Use the search functionality to find friends.
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and create a pull request with your changes.
+
+## License
+
+This project is licensed under the MIT License (or specify if different).
