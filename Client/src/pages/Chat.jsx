@@ -1,4 +1,4 @@
-import React, { useEffect, useState} from "react";
+import { useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
 import { Stomp } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
@@ -10,7 +10,6 @@ import Welcome from "../component/Welcome";
 import { UserAuth } from "../context/AuthContext";
 import { toast } from 'react-toastify';
 import axiosInstance, { setAuthToken } from "../utils/axiosConfig";
-import Logout from "../component/Logout";
 import axios from "axios";
 
 export default function Chat() {
@@ -57,9 +56,9 @@ export default function Chat() {
       const client = Stomp.over(() => socket);
       
       // Enable debug mode
-      client.debug = function(str) {
-          console.log(str);
-      };
+      // client.debug = function(str) {
+      //     console.log(str);
+      // };
 
       const headers = {
         'Authorization': `Bearer ${accessToken}`,
@@ -69,13 +68,13 @@ export default function Chat() {
       client.connect(headers, function(frame) {
           setConnected(true);
           setConnectionStatus('Connected');
-          console.log('Connected: ' + frame);
+          // console.log('Connected: ' + frame);
           const username = user?.username;
           // Subscribe to private messages
           const subscription = client.subscribe('/user/' + username + '/queue/private', function(message) {
-              console.log('Received message:', message);
+              // console.log('Received message:', message);
               const privateMessage = JSON.parse(message.body);
-              console.log('Parsed message:', privateMessage);
+              // console.log('Parsed message:', privateMessage);
               
               // Update messages state by adding the new message to the existing array
               setMessages(prevMessages => {
@@ -89,7 +88,7 @@ export default function Chat() {
               });
           });
           setStompClient(client);
-          console.log('Subscribed to: /user/' + username + '/queue/private');
+          // console.log('Subscribed to: /user/' + username + '/queue/private');
       }, function(error) {
           console.error('Error: ' + error);
           setConnected(false);
@@ -99,8 +98,18 @@ export default function Chat() {
     }
 
     connect();
+
+    return () => {
+      if (stompClient) {
+        stompClient.disconnect(() => {
+          setConnected(false);
+          setConnectionStatus('Disconnected');
+          // console.log('Disconnected from WebSocket');
+        });
+      }
+    };
     
-  }, [isAuthenticated, user, accessToken,currentChat]);
+  }, [isAuthenticated, user, accessToken]);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -109,10 +118,9 @@ export default function Chat() {
           setIsNavigating(true);
           setAuthToken(accessToken);
           if(user.isAvatarSet){
-            user.avatarUrl=user.avatarUrl;
-            console.log('Fetching contacts with token:', accessToken);
+            // user.avatarUrl=user.avatarUrl;
             const res = await axiosInstance.get(allUsersRoute);
-            console.log('Contacts response:', res.data);
+            // console.log('Contacts response:', res.data);
             setContacts(res.data);
           }
         } catch (error) {
@@ -168,7 +176,7 @@ export default function Chat() {
       return [...currentMessages, privateMessage];
     });
 
-    console.log('Sending message:', privateMessage);
+    // console.log('Sending message:', privateMessage);
     stompClient.send("/app/private-message", {}, JSON.stringify(privateMessage));
   }
 

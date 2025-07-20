@@ -25,7 +25,6 @@ axiosInstance.interceptors.request.use(
 // Add response interceptor
 axiosInstance.interceptors.response.use(
     (response) => {
-        console.log('Response received:', response.status);
         return response;
     },
     (error) => {
@@ -36,7 +35,6 @@ axiosInstance.interceptors.response.use(
 
 // Function to set auth token
 export const setAuthToken = (token) => {
-    console.log('Setting auth token:', token);
     if (token) {
         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         console.log('Headers after setting:', axiosInstance.defaults.headers.common);
