@@ -11,7 +11,7 @@ A real-time chat application where users can register, set avatars, chat with fr
 - **Logout**: Secure logout functionality.
 - **Error Handling**: Validation and error messages for invalid inputs.
 
-Take a look at the live version: https://gaurb-ourapp.netlify.app/
+Take a look at the live version: https://ourapp1.netlify.app/
 
 ## Tech Stack
 
