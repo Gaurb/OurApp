@@ -1,4 +1,4 @@
-export const host = "http://localhost:8080";
+export const host = process.env.REACT_APP_BACKEND_URL  || "http://localhost:8080";
 export const loginRoute = `${host}/api/auth/login`;
 export const registerRoute = `${host}/api/auth/register`;
 export const refreshRoute = `${host}/api/auth/refresh`;
