@@ -1,7 +1,16 @@
 package com.gaurav.chat_app_backend.payload;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.List;
 
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class PerplexityResponse {
     private String id;
     private String model;
@@ -74,15 +83,4 @@ public class PerplexityResponse {
         }
     }
 
-    public PerplexityResponse(String id, String model, long created, Usage usage, List<String> citations,
-                              List<SearchResult> search_results, String object, List<Choice> choices) {
-        this.id = id;
-        this.model = model;
-        this.created = created;
-        this.usage = usage;
-        this.citations = citations;
-        this.search_results = search_results;
-        this.object = object;
-        this.choices = choices;
-    }
 }

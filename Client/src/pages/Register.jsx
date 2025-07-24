@@ -5,6 +5,7 @@ import Logo from "../assets/logo.svg";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { UserAuth } from "../context/AuthContext";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 
 export default function Register() {
@@ -24,6 +25,8 @@ export default function Register() {
   });
   const { register, isAuthenticated } = UserAuth();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && !isNavigating) {
@@ -91,31 +94,65 @@ export default function Register() {
             <img src={Logo} alt="logo" />
             <h1>OurApp</h1>
           </div>
-          <input
-            type="text"
-            placeholder="Username"
-            name="username"
-            onChange={(e) => handleChange(e)}
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            name="email"
-            onChange={(e) => handleChange(e)}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            name="password"
-            onChange={(e) => handleChange(e)}
-          />
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            name="confirmPassword"
-            onChange={(e) => handleChange(e)}
-          />
-          <button type="submit">Create User</button>
+          <div className="form-group">
+            <label htmlFor="username">Username</label>
+            <input
+              id="username"
+              type="text"
+              placeholder="Choose a username"
+              name="username"
+              onChange={(e) => handleChange(e)}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              name="email"
+              onChange={(e) => handleChange(e)}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <div className="password-container">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Create a password"
+                name="password"
+                onChange={(e) => handleChange(e)}
+              />
+              <button
+                type="button"
+                className="toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <div className="password-container">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your password"
+                name="confirmPassword"
+                onChange={(e) => handleChange(e)}
+              />
+              <button
+                type="button"
+                className="toggle-password"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+          <button type="submit">Create Account</button>
           <span>
             Already have an account ? <Link to="/login">Login.</Link>
           </span>
@@ -132,65 +169,154 @@ const FormContainer = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1rem;
   align-items: center;
-  background-color: #131324;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+  
   .brand {
     display: flex;
     align-items: center;
     gap: 1rem;
     justify-content: center;
+    margin-bottom: 2rem;
+    
     img {
-      height: 5rem;
+      height: 4rem;
+      filter: brightness(1.2) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
     }
+    
     h1 {
       color: white;
+      font-size: 2.5rem;
+      font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     }
   }
 
   form {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    background-color: #00000076;
-    border-radius: 2rem;
-    padding: 3rem 5rem;
-  }
-  input {
-    background-color: transparent;
-    padding: 1rem;
-    border: 0.1rem solid #4e0eff;
-    border-radius: 0.4rem;
-    color: white;
-    width: 100%;
-    font-size: 1rem;
-    &:focus {
-      border: 0.1rem solid #997af0;
-      outline: none;
+    gap: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 3rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    min-width: 400px;
+    
+    @media screen and (max-width: 480px) {
+      min-width: 300px;
+      padding: 2rem;
     }
   }
-  button {
-    background-color: #4e0eff;
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  label {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0.9;
+  }
+  
+  input {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 1rem 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: white;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    &:focus {
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+      outline: none;
+      background: rgba(255, 255, 255, 0.15);
+    }
+  }
+  
+  .password-container {
+    position: relative;
+    width: 100%;
+    
+    input {
+      padding-right: 5rem;
+    }
+  }
+  
+  .toggle-password {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      color: white;
+      transform: translateY(-50%) scale(1.1);
+    }
+  }
+  
+  button[type="submit"] {
+    background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
     padding: 1rem 2rem;
     border: none;
-    font-weight: bold;
+    font-weight: 600;
     cursor: pointer;
-    border-radius: 0.4rem;
+    border-radius: 12px;
     font-size: 1rem;
     text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    margin-top: 1rem;
+    
     &:hover {
-      background-color: #4e0eff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    
+    &:active {
+      transform: translateY(0);
     }
   }
+  
   span {
     color: white;
-    text-transform: uppercase;
+    text-align: center;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-top: 1rem;
+    
     a {
-      color: #4e0eff;
+      color: #ffeb3b;
       text-decoration: none;
-      font-weight: bold;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        color: white;
+        text-shadow: 0 0 8px rgba(255, 235, 59, 0.6);
+      }
     }
   }
 `;

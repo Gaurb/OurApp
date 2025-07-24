@@ -1,5 +1,6 @@
 package com.gaurav.chat_app_backend.config;
 
+import com.gaurav.chat_app_backend.constants.AppConstants;
 import com.gaurav.chat_app_backend.entities.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,7 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000")); // your React origin
+        config.setAllowedOrigins(List.of("http://localhost:3000", AppConstants.FRONT_END_BASE_URL.replaceAll("/$", ""))); // your React origin
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*")); // let any headers through
         config.setAllowCredentials(true); // required for cookies

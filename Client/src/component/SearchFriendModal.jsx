@@ -53,7 +53,9 @@ export default function SearchFriendModal({ isOpen, onClose }) {
         </CloseButton>
         <h2>Add Friend</h2>
         <SearchForm onSubmit={(e) => e.preventDefault()}>
+          <label htmlFor="search-friend" className="sr-only">Search by username</label>
           <SearchInput
+            id="search-friend"
             type="text"
             placeholder="Search by username..."
             value={searchQuery}
@@ -155,6 +157,18 @@ const SearchInput = styled.input`
   &:focus {
     outline: none;
     box-shadow: 0 0 0 2px #4e0eff;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 `;
 

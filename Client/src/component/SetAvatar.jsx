@@ -60,18 +60,19 @@ export default function SetAvatar() {
     }
   };
 
+  const generateAvatars = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(getAvatarRoute);
+      setAvatars(response.data);
+    } catch (error) {
+      console.error("Error generating avatars:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const generateAvatars = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axios.get(getAvatarRoute);
-        setAvatars(response.data);
-      } catch (error) {
-        console.error("Error generating avatars:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     generateAvatars();
   }, []);
 
@@ -89,6 +90,10 @@ export default function SetAvatar() {
           <div className="title-container">
             <h1>Choose Your Avatar</h1>
             <p className="subtitle">Select a profile picture that represents you</p>
+            <button className="refresh-btn" onClick={generateAvatars}>
+              <BsArrowRepeat className="refresh-icon" />
+              Refresh Avatars
+            </button>
           </div>
           <div className="avatars">
             {avatars.map((avatar, index) => {
@@ -125,13 +130,15 @@ const Container = styled.div`
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  gap: 3rem;
-  background-color: #131324;
+  gap: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   height: 100vh;
   width: 100vw;
+  padding: 2rem;
 
   .loader {
-    max-inline-size: 100%;
+    max-width: 150px;
+    filter: brightness(1.2);
   }
 
   .title-container {
@@ -140,41 +147,51 @@ const Container = styled.div`
     align-items: center;
     gap: 1rem;
     text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 
     h1 {
       color: white;
       font-size: 2.5rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      letter-spacing: 1px;
     }
 
     .subtitle {
-      color: #a0a0a0;
+      color: rgba(255, 255, 255, 0.8);
       font-size: 1.1rem;
-      margin-bottom: 1rem;
+      margin: 0;
+      font-weight: 400;
     }
 
     .refresh-btn {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background-color: #4e0eff;
+      background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
-      padding: 0.75rem 1.5rem;
+      padding: 0.8rem 1.5rem;
       border: none;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      border-radius: 0.5rem;
-      font-size: 1rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
       transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
       
       .refresh-icon {
         font-size: 1.2rem;
       }
 
       &:hover {
-        background-color: #3b0dcc;
         transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
       }
 
       &:active {
@@ -185,60 +202,73 @@ const Container = styled.div`
 
   .avatars {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
-    padding: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
 
     .avatar {
-      border: 0.4rem solid transparent;
-      padding: 0.4rem;
-      border-radius: 1rem;
+      border: 2px solid transparent;
+      padding: 0.8rem;
+      border-radius: 16px;
       display: flex;
       justify-content: center;
       align-items: center;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
-      background-color: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
       
       img {
-        height: 8rem;
-        width: 8rem;
+        height: 5rem;
+        width: 5rem;
+        border-radius: 12px;
+        object-fit: cover;
         transition: all 0.3s ease;
-        border-radius: 0.5rem;
       }
 
       &:hover {
-        transform: translateY(-5px);
-        background-color: rgba(255, 255, 255, 0.15);
+        transform: translateY(-5px) scale(1.05);
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
       }
     }
 
     .selected {
-      border: 0.4rem solid #4e0eff;
-      background-color: rgba(78, 14, 255, 0.1);
+      border-color: #ffeb3b;
+      background: rgba(255, 235, 59, 0.1);
+      box-shadow: 0 0 20px rgba(255, 235, 59, 0.3);
       
       &:hover {
-        background-color: rgba(78, 14, 255, 0.15);
+        background: rgba(255, 235, 59, 0.15);
+        border-color: #ffeb3b;
       }
     }
   }
 
   .submit-btn {
-    background-color: #4e0eff;
+    background: linear-gradient(135deg, #667eea, #764ba2);
     color: white;
     padding: 1rem 2.5rem;
     border: none;
     font-weight: 600;
     cursor: pointer;
-    border-radius: 0.5rem;
-    font-size: 1.1rem;
+    border-radius: 12px;
+    font-size: 1rem;
     text-transform: uppercase;
+    letter-spacing: 1px;
     transition: all 0.3s ease;
-    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 
     &:hover:not(.disabled) {
-      background-color: #3b0dcc;
       transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
     }
 
     &:active:not(.disabled) {
@@ -246,9 +276,41 @@ const Container = styled.div`
     }
 
     &.disabled {
-      background-color: #2d2d2d;
-      color: #666;
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.5);
       cursor: not-allowed;
+      box-shadow: none;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    padding: 1rem;
+    
+    .title-container {
+      padding: 1.5rem;
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .subtitle {
+        font-size: 1rem;
+      }
+    }
+    
+    .avatars {
+      grid-template-columns: repeat(2, 1fr);
+      padding: 1.5rem;
+      
+      .avatar img {
+        height: 4rem;
+        width: 4rem;
+      }
+    }
+    
+    .submit-btn {
+      padding: 0.8rem 2rem;
+      font-size: 0.9rem;
     }
   }
 `;

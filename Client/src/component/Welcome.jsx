@@ -49,32 +49,81 @@ const Container = styled.div`
   align-items: center;
   color: white;
   flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  height: 100%;
+  
   img {
-    height: 20rem;
+    height: 15rem;
+    filter: brightness(1.1) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+    animation: float 3s ease-in-out infinite;
   }
+  
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 0;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 1px;
+    
+    @media screen and (max-width: 768px) {
+      font-size: 2rem;
+    }
+  }
+  
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 400;
+    text-align: center;
+    margin: 0;
+    opacity: 0.8;
+    
+    @media screen and (max-width: 768px) {
+      font-size: 1rem;
+    }
+  }
+  
   span {
-    color: #4e0eff;
+    background: linear-gradient(135deg, #ffeb3b, #ffc107);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
   }
 `;
 
 const AddFriendButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: #4e0eff;
+  gap: 0.8rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
-  padding: 0.8rem 1.5rem;
+  padding: 1rem 2rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 12px;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 
   &:hover {
-    background-color: #3a0cc9;
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
   }
 
   &:active {
@@ -83,5 +132,14 @@ const AddFriendButton = styled.button`
 
   svg {
     font-size: 1.2rem;
+  }
+  
+  @media screen and (max-width: 768px) {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+    
+    svg {
+      font-size: 1rem;
+    }
   }
 `;

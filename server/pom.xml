@@ -89,6 +89,13 @@
 			<version>2.2.0</version>
 		</dependency>
 
+		<!--		Environment Variables Dependency -->
+		<dependency>
+			<groupId>io.github.cdimascio</groupId>
+			<artifactId>dotenv-java</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+
 		<!--		SpringBoot Security Dependency -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

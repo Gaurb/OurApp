@@ -52,6 +52,7 @@ public class ChatController {
         message.setSender(privateMessage.getSender());
         message.setReceiver(privateMessage.getReceiver());
         message.setContent(privateMessage.getContent());
+        message.setTimestamp(LocalDateTime.now());
         messageRepository.save(message);
         // Send to recipient
         String recipientDestination = "/user/" + privateMessage.getReceiver() + "/queue/private";

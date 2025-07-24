@@ -18,7 +18,7 @@ export default function Contacts({ contacts, changeChat }) {
   return (
     <>
       {user && (
-        <Container>
+        <Container className="contacts-panel">
           <div className="brand">
             <img src={Logo} alt="logo" />
             <h3>OurApp</h3>
@@ -69,86 +69,165 @@ export default function Contacts({ contacts, changeChat }) {
 }
 const Container = styled.div`
   display: grid;
-  grid-template-rows: 10% 75% 15%;
-  overflow: hidden;
-  background-color: #080420;
+  grid-template-rows: auto 1fr auto;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  
   .brand {
     display: flex;
     align-items: center;
     gap: 1rem;
     justify-content: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
     img {
-      height: 2rem;
+      height: 2.5rem;
+      filter: brightness(1.2);
     }
+    
     h3 {
       color: white;
+      font-size: 1.4rem;
+      font-weight: 600;
       text-transform: uppercase;
+      letter-spacing: 1px;
     }
   }
+  
   .contacts {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    overflow: auto;
-    gap: 0.8rem;
+    padding: 1rem;
+    overflow-y: auto;
+    gap: 0.5rem;
+    
     &::-webkit-scrollbar {
-      width: 0.2rem;
-      &-thumb {
-        background-color: #ffffff39;
-        width: 0.1rem;
-        border-radius: 1rem;
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.5);
       }
     }
+    
     .contact {
-      background-color: #ffffff34;
-      min-height: 5rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1rem;
       cursor: pointer;
-      width: 90%;
-      border-radius: 0.2rem;
-      padding: 0.4rem;
       display: flex;
-      gap: 1rem;
       align-items: center;
-      transition: 0.5s ease-in-out;
+      gap: 1rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
+      position: relative;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+      
       .avatar {
+        position: relative;
+        
         img {
           height: 3rem;
+          width: 3rem;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          transition: all 0.3s ease;
+        }
+        
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 2px;
+          right: 2px;
+          width: 12px;
+          height: 12px;
+          background: #4CAF50;
+          border-radius: 50%;
+          border: 2px solid white;
         }
       }
+      
       .username {
+        flex: 1;
+        
         h3 {
           color: white;
+          font-size: 1rem;
+          font-weight: 500;
+          margin: 0;
         }
       }
     }
+    
     .selected {
-      background-color: #9a86f3;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-color: rgba(255, 255, 255, 0.3);
+      
+      &:hover {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+      }
     }
   }
 
   .current-user {
-    background-color: #0d0d30;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 2rem;
+    padding: 1.5rem;
+    gap: 1rem;
+    
     .avatar {
       img {
-        height: 4rem;
-        max-inline-size: 100%;
+        height: 3.5rem;
+        width: 3.5rem;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255, 255, 255, 0.3);
       }
     }
+    
     .username {
+      flex: 1;
+      
       h2 {
         color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
       }
     }
-    @media screen and (min-width: 720px) and (max-width: 1080px) {
-      gap: 0.5rem;
-      .username {
-        h2 {
-          font-size: 1rem;
-        }
+    
+    @media screen and (max-width: 1080px) {
+      padding: 1rem;
+      gap: 0.8rem;
+      
+      .username h2 {
+        font-size: 1rem;
+      }
+      
+      .avatar img {
+        height: 3rem;
+        width: 3rem;
       }
     }
   }
