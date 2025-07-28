@@ -12,17 +12,12 @@ import com.gaurav.chat_app_backend.payload.TokenRefreshRequest;
 import com.gaurav.chat_app_backend.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 @Service
@@ -34,14 +29,13 @@ public class AuthenticationService {
     private final UserRepository userRepository;
 
 
-
     public AuthenticationResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("Username already exists");
         }
         var perplexingEmail = userRepository.findById(new ObjectId("687bd754e879154f366ef20d"))
                 .orElseThrow(() -> new CustomBusinessException("Perplexing email user not found"));
-        var user=User.builder()
+        var user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -50,8 +44,8 @@ public class AuthenticationService {
 
                 .build();
         User saved = userRepository.save(user);
-        var jwtToken=jwtService.generateToken(user);
-        var refreshToken=jwtService.generateRefreshToken(user);
+        var jwtToken = jwtService.generateToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .refreshToken(refreshToken)
@@ -71,10 +65,10 @@ public class AuthenticationService {
                         request.getPassword()
                 )
         );
-        var user=userRepository.findByUsername(request.getUsername())
-                .orElseThrow(()->new UsernameNotFoundException("User not found"));
-        var jwtToken=jwtService.generateToken(user);
-        var refreshToken=jwtService.generateRefreshToken(user);
+        var user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        var jwtToken = jwtService.generateToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
         return AuthenticationResponse.builder()
                 .token(jwtToken)
                 .refreshToken(refreshToken)
@@ -91,7 +85,7 @@ public class AuthenticationService {
 
         String refreshToken = request.getRefreshToken();
         String username = jwtService.extractUsername(refreshToken);
-        var userDetails= userRepository.findByUsername(username)
+        var userDetails = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (jwtService.isTokenValid(refreshToken, userDetails)) {
             String newAccessToken = jwtService.generateToken(userDetails);
@@ -105,7 +99,7 @@ public class AuthenticationService {
                             userDetails.getRole().name(),
                             userDetails.isAvatarSet()))
                     .build();
-        }else{
+        } else {
             throw new IllegalArgumentException("Invalid refresh token");
         }
     }
