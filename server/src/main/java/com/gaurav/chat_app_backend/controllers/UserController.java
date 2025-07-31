@@ -2,6 +2,7 @@ package com.gaurav.chat_app_backend.controllers;
 
 import com.gaurav.chat_app_backend.payload.AvatarResponse;
 import com.gaurav.chat_app_backend.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,6 +68,11 @@ public class UserController {
         String currentUsername = auth.getName();
         return ResponseEntity.ok(userService.searchFriend(currentUsername, query));
     }
+    @PostMapping("/uploadAvatar")
+    public ResponseEntity test(@RequestBody String t){
+        return ResponseEntity.ok("test");
+    }
+
     @PostMapping("/addFriend/{friendUsername}")
     public ResponseEntity<?> addFriend(@PathVariable String friendUsername) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -81,7 +87,7 @@ public class UserController {
     }
 
     @PostMapping("/removeFriend")
-    public ResponseEntity<?> removeFriend(@RequestBody String friendUsername) {
+    public ResponseEntity<?> removeFriend(@Valid @RequestBody String friendUsername) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not authenticated");

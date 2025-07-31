@@ -5,6 +5,7 @@ import com.gaurav.chat_app_backend.payload.AuthenticationResponse;
 import com.gaurav.chat_app_backend.payload.RegisterRequest;
 import com.gaurav.chat_app_backend.payload.TokenRefreshRequest;
 import com.gaurav.chat_app_backend.services.AuthenticationService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,7 +22,7 @@ public class AuthenticationController {
     private AuthenticationService service;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthenticationResponse> register(@Valid  @RequestBody RegisterRequest request) {
         try {
             return ResponseEntity.ok(service.register(request));
         } catch (Exception e) {
@@ -30,12 +31,12 @@ public class AuthenticationController {
         }
     }
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
+    public ResponseEntity<AuthenticationResponse> login(@Valid @RequestBody AuthenticationRequest request) {
         return ResponseEntity.ok(service.authenticate(request));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthenticationResponse> refresh(@RequestBody TokenRefreshRequest request) {
+    public ResponseEntity<AuthenticationResponse> refresh(@Valid @RequestBody TokenRefreshRequest request) {
         try{
             return ResponseEntity.ok(service.refreshToken(request));
         } catch (Exception e) {
