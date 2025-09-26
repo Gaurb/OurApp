@@ -1,1 +1,92 @@
 server/.env
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+Server/.mvn/timing.properties
+
+# Gradle
+.gradle
+build/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# IDEA
+*.iml
+*.ipr
+*.iws
+.idea/
+out/
+
+# VS Code
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# Node
+node_modules/
+
+# Test reports
+test-output/
+surefire-reports/
+jacoco.exec
+
+# Spring Boot
+spring.log
+
+# Uploaded files
+uploads/
+uploads/**
+
+# Ignore local database files
+*.h2.db
+*.mv.db
+
+# Ignore coverage reports
+coverage/
+coverage-*.json
+.nyc_output/
+
+# Ignore yarn and npm logs
+yarn-debug.log*
+yarn-error.log*
+npm-debug.log*
+
+# Ignore server-side config
+server/.env
