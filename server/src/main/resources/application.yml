@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: chat-app-backend
+  
+  # MongoDB connection properties
+  data:
+    mongodb:
+      # uri: mongodb://localhost:27017/chat-app
+      uri: ${MONGODB_URI:mongodb://localhost:27017/chat-app}
+      database: ${MONGODB_DATABASE:chat-app}
+      auto-index-creation: true
+  
+  # Devtools properties
+  devtools:
+    restart:
+      enabled: false
+    livereload:
+      enabled: false
+  
+  # Multipart properties
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  port: 8080
+
+# Swagger configuration
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# File storage configuration
+file:
+  upload-dir: ./uploads/avatars
+
+# Logging configuration
+logging:
+  level:
+    org.springframework.web: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
