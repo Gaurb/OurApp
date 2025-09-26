@@ -46,9 +46,19 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     
-    - name: Check if Server directory exists and make Maven wrapper executable
+    - name: Check if server directory exists and make Maven wrapper executable
       run: |
-        if [ -d "Server" ]; then
+        if [ -d "server" ]; then
+          echo "server directory found"
+          cd server
+          if [ -f "mvnw" ]; then
+            echo "Making mvnw executable"
+            chmod +x mvnw
+          else
+            echo "mvnw not found in server directory"
+            ls -la
+          fi
+        elif [ -d "Server" ]; then
           echo "Server directory found"
           cd Server
           if [ -f "mvnw" ]; then
@@ -59,14 +69,21 @@ jobs:
             ls -la
           fi
         else
-          echo "Server directory not found. Available directories:"
+          echo "Neither server nor Server directory found. Available directories:"
           ls -la
           exit 1
         fi
     
     - name: Run tests
       run: |
-        if [ -d "Server" ]; then
+        if [ -d "server" ]; then
+          cd server
+          if [ -f "mvnw" ]; then
+            ./mvnw clean test
+          else
+            mvn clean test
+          fi
+        elif [ -d "Server" ]; then
           cd Server
           if [ -f "mvnw" ]; then
             ./mvnw clean test
@@ -74,7 +91,7 @@ jobs:
             mvn clean test
           fi
         else
-          echo "Server directory not found"
+          echo "Neither server nor Server directory found"
           exit 1
         fi
       env:
@@ -104,7 +121,15 @@ jobs:
     
     - name: Build application
       run: |
-        if [ -d "Server" ]; then
+        if [ -d "server" ]; then
+          cd server
+          if [ -f "mvnw" ]; then
+            chmod +x mvnw
+            ./mvnw clean package -DskipTests
+          else
+            mvn clean package -DskipTests
+          fi
+        elif [ -d "Server" ]; then
           cd Server
           if [ -f "mvnw" ]; then
             chmod +x mvnw
@@ -113,7 +138,7 @@ jobs:
             mvn clean package -DskipTests
           fi
         else
-          echo "Server directory not found"
+          echo "Neither server nor Server directory found"
           exit 1
         fi
       env:
@@ -124,4 +149,6 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: jar-artifact
-        path: Server/target/*.jar
+        path: |
+          server/target/*.jar
+          Server/target/*.jar
