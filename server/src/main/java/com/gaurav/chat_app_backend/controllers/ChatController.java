@@ -1,28 +1,30 @@
 package com.gaurav.chat_app_backend.controllers;
-import com.gaurav.chat_app_backend.entities.Message;
-import com.gaurav.chat_app_backend.exception.CustomBusinessException;
-import com.gaurav.chat_app_backend.payload.MessageRequest;
-import com.gaurav.chat_app_backend.repo.MessageRepository;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.http.ResponseEntity;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.ArrayList;
+import com.gaurav.chat_app_backend.entities.Message;
+import com.gaurav.chat_app_backend.exception.CustomBusinessException;
+import com.gaurav.chat_app_backend.payload.MessageRequest;
+import com.gaurav.chat_app_backend.payload.TypingStatusRequest;
+import com.gaurav.chat_app_backend.payload.TypingStatusResponse;
+import com.gaurav.chat_app_backend.repo.MessageRepository;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequiredArgsConstructor
@@ -95,8 +97,50 @@ public class ChatController {
         return ResponseEntity.ok(paginatedMessages);
     }
 
+    @MessageMapping("/typing-status")
+    public void handleTypingStatus(@Valid @Payload TypingStatusRequest typingStatusRequest) {
+        logger.info("Received typing status: {}", typingStatusRequest);
+        
+        if (typingStatusRequest.getSender() == null || typingStatusRequest.getReceiver() == null) {
+            throw new CustomBusinessException("Sender and receiver cannot be null");
+        }
+        
+        // Create response with timestamp
+        TypingStatusResponse response = new TypingStatusResponse(
+            typingStatusRequest.getSender(),
+            typingStatusRequest.getReceiver(),
+            typingStatusRequest.getIsTyping()
+        );
+        
+        // Send typing status to the receiver
+        messagingTemplate.convertAndSendToUser(
+            typingStatusRequest.getReceiver(),
+            "/queue/typing",
+            response
+        );
+    }
 
-
-
+    @MessageMapping("/stop-typing")
+    public void handleStopTyping(@Valid @Payload TypingStatusRequest typingStatusRequest) {
+        logger.info("Received stop typing: {}", typingStatusRequest);
+        
+        if (typingStatusRequest.getSender() == null || typingStatusRequest.getReceiver() == null) {
+            throw new CustomBusinessException("Sender and receiver cannot be null");
+        }
+        
+        // Create response for stop typing
+        TypingStatusResponse response = new TypingStatusResponse(
+            typingStatusRequest.getSender(),
+            typingStatusRequest.getReceiver(),
+            false
+        );
+        
+        // Send stop typing status to the receiver
+        messagingTemplate.convertAndSendToUser(
+            typingStatusRequest.getReceiver(),
+            "/queue/typing",
+            response
+        );
+    }
 
 }

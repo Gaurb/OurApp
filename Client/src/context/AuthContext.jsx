@@ -54,12 +54,12 @@ export const AuthContextProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
         const response = await axios.post(loginRoute, { username, password }, { withCredentials: true });
-        console.log(response);
+        // console.log(response);
         
         setAccessToken(response.data.token);
         setUser(response.data.user);
         setRefreshToken(response.data.refreshToken);
-        console.log(accessToken, refreshToken, user);
+        // console.log(accessToken, refreshToken, user);
         localStorage.setItem(process.env.REACT_APP_REFRESH_TOKEN, JSON.stringify(response.data.refreshToken));
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
         return response;
