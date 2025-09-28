@@ -2,9 +2,10 @@ import React, { useRef, useEffect, useState } from "react";
 import styled from "styled-components";
 import ChatInput from "./ChatInput";
 import Logout from "./Logout";
+import TypingIndicator from "./TypingIndicator";
 import defaultAvatar from '../assets/generated-image.png';
 
-export default function ChatContainer({ currentChat, messages = [], sendMessage, stompClient, user }) {
+export default function ChatContainer({ currentChat, messages = [], sendMessage, stompClient, user, typingUsers = [] }) {
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
@@ -110,9 +111,24 @@ export default function ChatContainer({ currentChat, messages = [], sendMessage,
             </div>
           );
         })}
+        
+        {/* Show typing indicators */}
+        {typingUsers.map((typingUser) => (
+          <TypingIndicator 
+            key={typingUser}
+            isVisible={true}
+            username={typingUser}
+          />
+        ))}
+        
         <div ref={messagesEndRef} style={{ height: "1px", width: "100%" }} />
       </div>
-      <ChatInput handleSendMsg={sendMessage} />
+      <ChatInput 
+        handleSendMsg={sendMessage} 
+        currentChat={currentChat}
+        user={user}
+        stompClient={stompClient}
+      />
     </Container>
   );
 }

@@ -7,6 +7,8 @@ import { allUsersRoute, host } from "../utils/APIRoutes";
 import ChatContainer from "../component/ChatContainer";
 import Contacts from "../component/Contacts";
 import Welcome from "../component/Welcome";
+import MobileNav from "../component/MobileNav";
+import SearchFriendModal from "../component/SearchFriendModal";
 import { UserAuth } from "../context/AuthContext";
 import { toast } from 'react-toastify';
 import axiosInstance, { setAuthToken } from "../utils/axiosConfig";
@@ -14,7 +16,7 @@ import axios from "axios";
 
 export default function Chat() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, accessToken } = UserAuth();
+  const { user, isAuthenticated, accessToken, logout } = UserAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [currentChat, setCurrentChat] = useState(undefined);
@@ -22,6 +24,21 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [connected, setConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('Disconnected');
+  const [typingUsers, setTypingUsers] = useState([]);
+  const [showContacts, setShowContacts] = useState(true);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setShowContacts(true);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Add useEffect to load messages when currentChat changes
   useEffect(() => {
@@ -90,6 +107,24 @@ export default function Chat() {
             return currentMessages;
           });
         });
+
+        // Subscribe to typing status
+        client.subscribe(`/user/${user.username}/queue/typing`, function(message) {
+          const typingStatus = JSON.parse(message.body);
+          
+          setTypingUsers(prevTypingUsers => {
+            if (typingStatus.isTyping) {
+              // Add user to typing list if not already there
+              if (!prevTypingUsers.includes(typingStatus.sender)) {
+                return [...prevTypingUsers, typingStatus.sender];
+              }
+              return prevTypingUsers;
+            } else {
+              // Remove user from typing list
+              return prevTypingUsers.filter(user => user !== typingStatus.sender);
+            }
+          });
+        });
         
         setStompClient(client);
       }, function(error) {
@@ -151,6 +186,12 @@ export default function Chat() {
 
   const handleChatChange = (chat) => {
     setCurrentChat(chat);
+    // Clear typing users when switching chats
+    setTypingUsers([]);
+    // On mobile, switch to chat view when selecting a contact
+    if (window.innerWidth <= 768) {
+      setShowContacts(false);
+    }
   };
 
   // Add connection status check function
@@ -193,30 +234,57 @@ export default function Chat() {
     return null;
   }
 
+  const handleLogout = async () => {
+    if (stompClient) {
+      stompClient.disconnect();
+    }
+    const res = await logout();
+    if(res.status === 200){
+      navigate("/login");
+    }
+  };
+
   return (
     <>
       <Container connected={connected}>
+        <MobileNav 
+          onShowContacts={() => setShowContacts(true)}
+          showContacts={showContacts}
+        />
         
         <div className="container">
           <div className="connection-status">
             {connectionStatus}
           </div>
-          <div className="contacts-panel">
-            <Contacts contacts={contacts} changeChat={handleChatChange} />
-          </div>
-          {currentChat === undefined ? (
-            <Welcome />
-          ) : (
-            <ChatContainer 
-              currentChat={currentChat} 
-              messages={messages}
-              sendMessage={sendMessage}
-              stompClient={stompClient}
-              user={user}
+          <div className={`contacts-panel ${showContacts ? 'show' : ''}`}>
+            <Contacts 
+              contacts={contacts} 
+              changeChat={handleChatChange}
+              onShowSearchModal={() => setShowSearchModal(true)}
             />
-          )}
+          </div>
+          <div className={`chat-panel ${!showContacts ? 'show' : ''}`}>
+            {currentChat === undefined ? (
+              <Welcome />
+            ) : (
+              <ChatContainer 
+                currentChat={currentChat} 
+                messages={messages}
+                sendMessage={sendMessage}
+                stompClient={stompClient}
+                user={user}
+                typingUsers={typingUsers.filter(typingUser => typingUser === currentChat?.username)}
+              />
+            )}
+          </div>
         </div>
       </Container>
+      
+      {/* Search Friend Modal at top level */}
+      <SearchFriendModal
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+      />
     </>
   );
 }
@@ -231,6 +299,11 @@ const Container = styled.div`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 1rem;
   
+  @media screen and (max-width: 768px) {
+    padding: 0;
+    padding-top: 60px; // Space for mobile nav
+  }
+  
   .container {
     height: 95vh;
     width: 95vw;
@@ -243,6 +316,7 @@ const Container = styled.div`
     display: grid;
     grid-template-columns: 320px 1fr;
     overflow: hidden;
+    position: relative;
     
     @media screen and (max-width: 1080px) {
       grid-template-columns: 280px 1fr;
@@ -251,9 +325,29 @@ const Container = styled.div`
     }
     
     @media screen and (max-width: 768px) {
+      width: 100vw;
+      height: calc(100vh - 60px);
+      border-radius: 0;
       grid-template-columns: 1fr;
+      
       .contacts-panel {
-        display: none;
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        
+        &:not(.show) {
+          // display: none !important;
+        }
+      }
+      
+      .chat-panel {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        
+        &:not(.show) {
+          display: none !important;
+        }
       }
     }
     
@@ -273,6 +367,11 @@ const Container = styled.div`
       z-index: 1000;
       backdrop-filter: blur(10px);
       margin-right: 60px; /* Add space for logout button */
+      
+      @media screen and (max-width: 768px) {
+        right: 10px;
+        margin-right: 0;
+      }
     }
   }
 `;

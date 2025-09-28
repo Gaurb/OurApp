@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { IoMdSend } from "react-icons/io";
 import styled from "styled-components";
 import Picker from "emoji-picker-react";
 
-export default function ChatInput({ handleSendMsg }) {
+export default function ChatInput({ handleSendMsg, currentChat, user, stompClient }) {
   const [msg, setMsg] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const typingTimeoutRef = useRef(null);
+  const isTypingRef = useRef(false);
   const handleEmojiPickerhideShow = () => {
     setShowEmojiPicker(!showEmojiPicker);
   };
@@ -17,9 +19,64 @@ export default function ChatInput({ handleSendMsg }) {
     setMsg(message);
   };
 
+  // Send typing status
+  const sendTypingStatus = useCallback((isTyping) => {
+    if (!stompClient || !stompClient.connected || !currentChat || !user) return;
+    
+    const typingData = {
+      sender: user.username,
+      receiver: currentChat.username,
+      isTyping: isTyping
+    };
+    
+    stompClient.send("/app/typing-status", {}, JSON.stringify(typingData));
+  }, [stompClient, currentChat, user]);
+
+  // Handle input change with typing detection
+  const handleInputChange = useCallback((e) => {
+    const value = e.target.value;
+    setMsg(value);
+    
+    // Send typing status if not already typing
+    if (!isTypingRef.current && value.length > 0) {
+      isTypingRef.current = true;
+      sendTypingStatus(true);
+    }
+    
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Set new timeout to stop typing after 2 seconds of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+        sendTypingStatus(false);
+      }
+    }, 2000);
+    
+    // If input is empty, immediately stop typing
+    if (value.length === 0 && isTypingRef.current) {
+      isTypingRef.current = false;
+      sendTypingStatus(false);
+    }
+  }, [sendTypingStatus]);
+
   const sendChat = (event) => {
     event.preventDefault();
     if (msg.length > 0) {
+      // Stop typing when sending message
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+        sendTypingStatus(false);
+      }
+      
+      // Clear timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
       handleSendMsg(msg);
       setMsg("");
     }
@@ -39,7 +96,7 @@ export default function ChatInput({ handleSendMsg }) {
           id="message-input"
           type="text"
           placeholder="type your message here"
-          onChange={(e) => setMsg(e.target.value)}
+          onChange={handleInputChange}
           value={msg}
         />
         <button type="submit">
@@ -76,7 +133,7 @@ const Container = styled.div`
         color: #ffeb3b;
         cursor: pointer;
         transition: all 0.3s ease;
-        padding: 0.5rem;
+        // padding: 0.5rem;
         border-radius: 50%;
         
         &:hover {
