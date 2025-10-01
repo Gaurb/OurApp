@@ -27,6 +27,7 @@ export default function Chat() {
   const [typingUsers, setTypingUsers] = useState([]);
   const [showContacts, setShowContacts] = useState(true);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   // Handle window resize
   useEffect(() => {
@@ -124,6 +125,13 @@ export default function Chat() {
               return prevTypingUsers.filter(user => user !== typingStatus.sender);
             }
           });
+        });
+
+
+        // Subscribe to suggestions
+        client.subscribe(`/user/${user.username}/queue/suggestions`, function(message) {
+          const suggestions = JSON.parse(message.body);
+          setSuggestions(suggestions);
         });
         
         setStompClient(client);
@@ -244,6 +252,7 @@ export default function Chat() {
     }
   };
 
+
   return (
     <>
       <Container connected={connected}>
@@ -274,6 +283,7 @@ export default function Chat() {
                 stompClient={stompClient}
                 user={user}
                 typingUsers={typingUsers.filter(typingUser => typingUser === currentChat?.username)}
+                suggestions={suggestions}
               />
             )}
           </div>

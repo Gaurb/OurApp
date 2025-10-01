@@ -392,8 +392,9 @@ const Container = styled.div`
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
-    padding: 1.5rem;
+    padding: 1rem;
     gap: 1rem;
+    // margin-bottom: 2rem;
     
     @media screen and (max-width: 768px) {
       padding: 1rem;
