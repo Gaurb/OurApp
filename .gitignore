@@ -90,3 +90,12 @@ npm-debug.log*
 
 # Ignore server-side config
 server/.env
+
+# Ignore .env files
+.env
+.env.*
+!.env.example
+!.env.development
+!.env.production
+!.env.test
+
