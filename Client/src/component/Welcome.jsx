@@ -55,10 +55,19 @@ const Container = styled.div`
   backdrop-filter: blur(10px);
   height: 100%;
   
+  @media screen and (max-width: 768px) {
+    gap: 1.5rem;
+    padding: 1.5rem 1rem;
+  }
+  
   img {
     height: 15rem;
     filter: brightness(1.1) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
     animation: float 3s ease-in-out infinite;
+    
+    @media screen and (max-width: 768px) {
+      height: 12rem;
+    }
   }
   
   h1 {
@@ -70,7 +79,8 @@ const Container = styled.div`
     letter-spacing: 1px;
     
     @media screen and (max-width: 768px) {
-      font-size: 2rem;
+      font-size: 1.8rem;
+      padding: 0 1rem;
     }
   }
   
@@ -83,6 +93,7 @@ const Container = styled.div`
     
     @media screen and (max-width: 768px) {
       font-size: 1rem;
+      padding: 0 1rem;
     }
   }
   

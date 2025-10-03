@@ -156,10 +156,13 @@ const Container = styled.div`
   backdrop-filter: blur(10px);
   padding: 0.8rem 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  min-height: 60px;
   
   @media screen and (max-width: 768px) {
     padding: 1rem;
     gap: 0.8rem;
+    min-height: 65px;
   }
   
   .button-container {

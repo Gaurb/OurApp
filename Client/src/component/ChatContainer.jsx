@@ -5,7 +5,8 @@ import Logout from "./Logout";
 import TypingIndicator from "./TypingIndicator";
 import defaultAvatar from '../assets/generated-image.png';
 
-export default function ChatContainer({ currentChat, messages = [], sendMessage, stompClient, user, typingUsers = [], suggestions = [] }) {
+export default function ChatContainer(props) {
+  const { currentChat, messages = [], sendMessage, stompClient, user, typingUsers = [], suggestions = [] } = props;
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
@@ -72,6 +73,11 @@ export default function ChatContainer({ currentChat, messages = [], sendMessage,
   return (
     <Container>
       <div className="chat-header">
+        <button className="back-button" onClick={props.onBack}>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
         <div className="user-details">
           <div className="avatar">
             <img
@@ -166,18 +172,57 @@ const Container = styled.div`
     box-sizing: border-box;
     
     @media screen and (max-width: 768px) {
-      padding: 1rem;
-      min-height: 70px;
-      max-height: 70px;
+      padding: 0.7rem 1rem;
+      min-height: 60px;
+      max-height: 60px;
+    }
+
+    .back-button {
+      display: none;
+      background: none;
+      border: none;
+      color: #4e0eff;
+      cursor: pointer;
+      padding: 0.5rem;
+      transition: all 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+      margin-right: 0.5rem;
+
+      svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      &:hover {
+        color: #6c3cff;
+        transform: scale(1.1);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      @media screen and (max-width: 768px) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
     }
     
     .user-details {
       display: flex;
       align-items: center;
       gap: 1rem;
+      flex: 1;
+      min-width: 0;
+
+      @media screen and (max-width: 768px) {
+        gap: 0.7rem;
+      }
       
       .avatar {
         position: relative;
+        flex-shrink: 0;
         
         img {
           height: 3rem;
@@ -185,6 +230,11 @@ const Container = styled.div`
           border-radius: 50%;
           object-fit: cover;
           border: 2px solid rgba(255, 255, 255, 0.2);
+
+          @media screen and (max-width: 768px) {
+            height: 2.5rem;
+            width: 2.5rem;
+          }
         }
         
         &::after {
@@ -201,11 +251,21 @@ const Container = styled.div`
       }
       
       .username {
+        flex: 1;
+        min-width: 0;
+
         h3 {
           color: white;
           font-size: 1.2rem;
           font-weight: 600;
           margin: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+
+          @media screen and (max-width: 768px) {
+            font-size: 1rem;
+          }
         }
       }
     }

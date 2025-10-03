@@ -1,32 +1,48 @@
-import { useEffect, useState} from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Stomp } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import styled from "styled-components";
-import { allUsersRoute, host } from "../utils/APIRoutes";
+import { allUsersRoute, host, getAllRoomsRoute, getGroupMessagesRoute } from "../utils/APIRoutes";
 import ChatContainer from "../component/ChatContainer";
+import GroupChatContainer from "../component/GroupChatContainer";
 import Contacts from "../component/Contacts";
+import GroupList from "../component/GroupList";
 import Welcome from "../component/Welcome";
 import MobileNav from "../component/MobileNav";
 import SearchFriendModal from "../component/SearchFriendModal";
+import CreateGroupModal from "../component/CreateGroupModal";
+import GroupSettings from "../component/GroupSettings";
 import { UserAuth } from "../context/AuthContext";
 import { toast } from 'react-toastify';
-import axiosInstance, { setAuthToken } from "../utils/axiosConfig";
 import axios from "axios";
 
 export default function Chat() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated, accessToken, logout } = UserAuth();
-  const [isNavigating, setIsNavigating] = useState(false);
+  
+  // Determine if we're in group mode based on route
+  const isGroupMode = location.pathname === '/groups';
+  
+  // Private chat states
   const [contacts, setContacts] = useState([]);
   const [currentChat, setCurrentChat] = useState(undefined);
+  
+  // Group chat states
+  const [rooms, setRooms] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [currentRoom, setCurrentRoom] = useState(undefined);
+  
+  // Shared states
   const [stompClient, setStompClient] = useState(null);
   const [messages, setMessages] = useState([]);
   const [connected, setConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState('Disconnected');
   const [typingUsers, setTypingUsers] = useState([]);
   const [showContacts, setShowContacts] = useState(true);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
 
   // Handle window resize
@@ -41,64 +57,139 @@ export default function Chat() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Add useEffect to load messages when currentChat changes
-  useEffect(() => {
-    const loadMessages = async () => {
-      if (currentChat && user) {
-        try {
-          const response = await axios.get(`${host}/messages/${user.username}/${currentChat.username}`);
-          // Sort messages by timestamp before setting state
-          const sortedMessages = Array.isArray(response.data) 
-            ? response.data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-            : [];
-          setMessages(sortedMessages);
-          console.log('Messages loaded:', messages);
-        } catch (error) {
-          console.error('Error loading messages:', error);
-          setMessages([]);
-        }
-      } else {
-        setMessages([]); // Clear messages when no chat is selected
-      }
-    };
-    loadMessages();
-  }, [currentChat, user]);
-
-
-
-  useEffect(() => {
-    function connect() {
-      const socket = new SockJS(`${host}/gs-guide-websocket`, null, {
-        transports: ['websocket'],
+  // Load contacts for private chat
+  const loadContacts = async () => {
+    try {
+      const response = await axios.get(allUsersRoute, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
       });
-      
-      const client = Stomp.over(() => socket);
-      
-      // Disable debug logs
-      client.debug = () => {};
+      setContacts(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Error loading contacts:', error);
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        navigate('/login');
+      }
+    }
+  };
 
-      const headers = {
-        'Authorization': `Bearer ${accessToken}`,
-        'X-Custom-Header': 'value'
-      };
+  // Load rooms for group chat
+  const loadRooms = async () => {
+    try {
+      const response = await axios.get(getAllRoomsRoute, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      setRooms(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Error loading rooms:', error);
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        navigate('/login');
+      }
+    }
+  };
 
-      client.connect(headers, function(frame) {
-        if (!user?.username) return; // Don't proceed if no username
+  // Load friends
+  const loadFriends = async () => {
+    try {
+      const response = await axios.get(`${host}/api/user/getFriends`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      setFriends(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Error loading friends:', error);
+    }
+  };
+
+  // Load initial data
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      loadContacts();
+      loadRooms();
+      loadFriends();
+    }
+  }, [isAuthenticated, user]);
+
+  // Load messages for private chat
+  useEffect(() => {
+    const loadPrivateMessages = async () => {
+      if (currentChat && user && !isGroupMode) {
+        try {
+          const response = await axios.get(`${host}/messages/${user.username}/${currentChat.username}`);
+          const sortedMessages = Array.isArray(response.data) 
+            ? response.data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+            : [];
+          setMessages(sortedMessages);
+        } catch (error) {
+          console.error('Error loading messages:', error);
+          setMessages([]);
+        }
+      } else if (!currentChat && !isGroupMode) {
+        setMessages([]);
+      }
+    };
+    loadPrivateMessages();
+  }, [currentChat, user, isGroupMode]);
+
+  // Load messages for group chat
+  useEffect(() => {
+    const loadGroupMessages = async () => {
+      if (currentRoom && user && isGroupMode) {
+        try {
+          const response = await axios.get(getGroupMessagesRoute(currentRoom.roomName), {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          const sortedMessages = Array.isArray(response.data) 
+            ? response.data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+            : [];
+          setMessages(sortedMessages);
+        } catch (error) {
+          console.error('Error loading messages:', error);
+          setMessages([]);
+        }
+      } else if (!currentRoom && isGroupMode) {
+        setMessages([]);
+      }
+    };
+    loadGroupMessages();
+  }, [currentRoom, user, accessToken, isGroupMode]);
+
+  // WebSocket connection
+  useEffect(() => {
+    if (!user?.username || !accessToken) return;
+
+    const socket = new SockJS(`${host}/gs-guide-websocket`, null, {
+      transports: ['websocket'],
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    const client = Stomp.over(() => socket);
+    client.debug = () => {};
+
+    const headers = {
+      'Authorization': `Bearer ${accessToken}`
+    };
+
+    client.connect(headers, function(frame) {
+      setConnected(true);
+      
+      // Subscribe to private messages
+      client.subscribe(`/user/${user.username}/queue/private`, function(message) {
+        const privateMessage = JSON.parse(message.body);
         
-        setConnected(true);
-        setConnectionStatus('Connected');
-        
-        // Subscribe to private messages
-        client.subscribe(`/user/${user.username}/queue/private`, function(message) {
-          const privateMessage = JSON.parse(message.body);
-          
-          // Update messages state by adding the new message to the existing array
+        if (!isGroupMode) {
           setMessages(prevMessages => {
             const currentMessages = Array.isArray(prevMessages) ? prevMessages : [];
-            // If the message is for the current chat, add it to the messages
             if (privateMessage.sender === currentChat?.username || 
                 privateMessage.receiver === currentChat?.username) {
               return [...currentMessages, privateMessage].sort((a, b) => 
@@ -107,195 +198,242 @@ export default function Chat() {
             }
             return currentMessages;
           });
-        });
+        }
+      });
 
-        // Subscribe to typing status
-        client.subscribe(`/user/${user.username}/queue/typing`, function(message) {
-          const typingStatus = JSON.parse(message.body);
-          
+      // Subscribe to private typing status
+      client.subscribe(`/user/${user.username}/queue/typing`, function(message) {
+        const typingStatus = JSON.parse(message.body);
+        
+        if (!isGroupMode) {
           setTypingUsers(prevTypingUsers => {
             if (typingStatus.isTyping) {
-              // Add user to typing list if not already there
               if (!prevTypingUsers.includes(typingStatus.sender)) {
                 return [...prevTypingUsers, typingStatus.sender];
               }
-              return prevTypingUsers;
             } else {
-              // Remove user from typing list
               return prevTypingUsers.filter(user => user !== typingStatus.sender);
             }
+            return prevTypingUsers;
+          });
+        }
+      });
+
+      // Subscribe to suggestions
+      client.subscribe(`/user/${user.username}/queue/suggestions`, function(message) {
+        const suggestions = JSON.parse(message.body);
+        setSuggestions(suggestions);
+      });
+
+      // Subscribe to group messages if in group mode
+      if (isGroupMode && currentRoom) {
+        client.subscribe(`/topic/room/${currentRoom.roomName}`, function(message) {
+          const groupMessage = JSON.parse(message.body);
+          setMessages(prevMessages => {
+            const currentMessages = Array.isArray(prevMessages) ? prevMessages : [];
+            return [...currentMessages, groupMessage].sort((a, b) => 
+              new Date(a.timestamp) - new Date(b.timestamp)
+            );
           });
         });
 
-
-        // Subscribe to suggestions
-        client.subscribe(`/user/${user.username}/queue/suggestions`, function(message) {
-          const suggestions = JSON.parse(message.body);
-          setSuggestions(suggestions);
+        // Subscribe to group typing
+        client.subscribe(`/topic/room/${currentRoom.roomName}/typing`, function(message) {
+          const typingStatus = JSON.parse(message.body);
+          
+          setTypingUsers(prevTypingUsers => {
+            if (typingStatus.isTyping && typingStatus.sender !== user.username) {
+              if (!prevTypingUsers.includes(typingStatus.sender)) {
+                return [...prevTypingUsers, typingStatus.sender];
+              }
+            } else {
+              return prevTypingUsers.filter(u => u !== typingStatus.sender);
+            }
+            return prevTypingUsers;
+          });
         });
-        
-        setStompClient(client);
-      }, function(error) {
-        console.error('WebSocket Connection Error:', error);
-        setConnected(false);
-        setConnectionStatus('Connection Failed');
-        toast.error('WebSocket Connection Failed');
-      });
-    }
-
-    let mounted = true;
-    
-    if (mounted && user?.username && accessToken) {
-      connect();
-    }
+      }
+      
+      setStompClient(client);
+    }, function(error) {
+      console.error('WebSocket Connection Error:', error);
+      setConnected(false);
+      toast.error('WebSocket Connection Failed');
+    });
 
     return () => {
-      mounted = false;
-      if (stompClient) {
-        stompClient.disconnect(() => {
-          if (mounted) {
-            setConnected(false);
-            setConnectionStatus('Disconnected');
-          }
+      if (client) {
+        client.disconnect(() => {
+          setConnected(false);
         });
       }
     };
-  }, [isAuthenticated, user, accessToken, currentChat]);
+  }, [user, accessToken, currentChat, currentRoom, isGroupMode]);
 
-  useEffect(() => {
-    const fetchContacts = async () => {
-      if (isAuthenticated && user && accessToken && !isNavigating) {
-        try {
-          setIsNavigating(true);
-          setAuthToken(accessToken);
-          if(user.isAvatarSet){
-            // user.avatarUrl=user.avatarUrl;
-            const res = await axiosInstance.get(allUsersRoute);
-            // console.log('Contacts response:', res.data);
-            setContacts(res.data);
-          }
-        } catch (error) {
-          console.error('Error fetching contacts:', error);
-          toast.error('Failed to fetch contacts');
-        } finally {
-          setIsNavigating(false);
-        }
-      }
-    };
-    if (!isAuthenticated) {
-      navigate("/login");
-    }
-    else if(user && user.isAvatarSet){
-      fetchContacts();
-    }else if(user && !user.isAvatarSet){
-      navigate("/setAvatar");
-    }
-  }, [isAuthenticated, user, accessToken]);
-
-  const handleChatChange = (chat) => {
-    setCurrentChat(chat);
-    // Clear typing users when switching chats
+  // Handle chat selection
+  const handleChatChange = (contact) => {
+    setCurrentChat(contact);
+    setCurrentRoom(undefined);
     setTypingUsers([]);
-    // On mobile, switch to chat view when selecting a contact
     if (window.innerWidth <= 768) {
       setShowContacts(false);
     }
   };
 
-  // Add connection status check function
-  const checkConnection = () => {
-    if (stompClient) {
-      const isConnected = stompClient.connected;
-      console.log('STOMP Client Connection Status:', isConnected);
-      return isConnected;
+  // Handle room selection
+  const handleRoomChange = (room) => {
+    setCurrentRoom(room);
+    setCurrentChat(undefined);
+    setTypingUsers([]);
+    if (window.innerWidth <= 768) {
+      setShowContacts(false);
     }
-    return false;
   };
 
-  // Modify sendMessage to update local state immediately
-  const sendMessage = (message) => {
-    if (!checkConnection()) {
-      toast.error('Not connected to chat server');
-      return;
-    }
+  // Send private message
+  const sendPrivateMessage = (msg) => {
+    if (!stompClient || !currentChat) return;
 
-    const now = new Date();
-    const privateMessage = {
-      sender: user?.username,
-      receiver: currentChat?.username,
-      content: message,
-      timestamp: now.toISOString() // Use ISO string format for consistent timestamp
+    const message = {
+      sender: user.username,
+      receiver: currentChat.username,
+      content: msg
     };
 
-    // Add message to local state immediately
-    setMessages(prevMessages => {
-      const currentMessages = Array.isArray(prevMessages) ? prevMessages : [];
-      const newMessages = [...currentMessages, privateMessage];
-      // Sort messages by timestamp
-      return newMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-    });
+    stompClient.send('/app/private-message', {}, JSON.stringify(message));
+  };
 
-    stompClient.send("/app/private-message", {}, JSON.stringify(privateMessage));
-  }
+  // Send group message
+  const sendGroupMessage = (msg) => {
+    if (!stompClient || !currentRoom) return;
 
-  if (!user) {
-    return null;
-  }
+    const message = {
+      sender: user.username,
+      roomName: currentRoom.roomName,
+      content: msg
+    };
+
+    stompClient.send('/app/group-message', {}, JSON.stringify(message));
+  };
+
+  const handleBack = () => {
+    if (isGroupMode) {
+      setCurrentRoom(undefined);
+    } else {
+      setCurrentChat(undefined);
+    }
+    setShowContacts(true);
+  };
 
   const handleLogout = async () => {
     if (stompClient) {
       stompClient.disconnect();
     }
     const res = await logout();
-    if(res.status === 200){
+    if (res.status === 200) {
       navigate("/login");
     }
   };
 
+  if (!user) {
+    return null;
+  }
 
   return (
-    <>
-      <Container connected={connected}>
+    <Container>
+      <div className="container">
         <MobileNav 
-          onShowContacts={() => setShowContacts(true)}
           showContacts={showContacts}
+          onShowContacts={() => setShowContacts(true)}
+          currentChat={isGroupMode ? currentRoom : currentChat}
+          onLogout={handleLogout}
         />
-        
-        <div className="container">
-          <div className="connection-status">
-            {connectionStatus}
-          </div>
-          <div className={`contacts-panel ${showContacts ? 'show' : ''}`}>
-            <Contacts 
-              contacts={contacts} 
+
+        {/* Contacts/Groups Panel */}
+        <div className={`contacts-panel ${showContacts ? 'show' : 'hide'}`}>
+          {isGroupMode ? (
+            <GroupList
+              rooms={rooms}
+              onSelectRoom={handleRoomChange}
+              onCreateRoom={() => setShowCreateModal(true)}
+              currentSelectedRoom={currentRoom}
+            />
+          ) : (
+            <Contacts
+              contacts={contacts}
               changeChat={handleChatChange}
               onShowSearchModal={() => setShowSearchModal(true)}
             />
-          </div>
-          <div className={`chat-panel ${!showContacts ? 'show' : ''}`}>
-            {currentChat === undefined ? (
-              <Welcome />
-            ) : (
-              <ChatContainer 
-                currentChat={currentChat} 
-                messages={messages}
-                sendMessage={sendMessage}
-                stompClient={stompClient}
-                user={user}
-                typingUsers={typingUsers.filter(typingUser => typingUser === currentChat?.username)}
-                suggestions={suggestions}
-              />
-            )}
-          </div>
+          )}
         </div>
-      </Container>
-      
-      {/* Search Friend Modal at top level */}
+
+        {/* Chat Panel */}
+        <div className={`chat-panel ${!showContacts ? 'show' : 'hide'}`}>
+          {isGroupMode ? (
+            currentRoom ? (
+              <GroupChatContainer
+                currentRoom={currentRoom}
+                messages={messages}
+                onSendMessage={sendGroupMessage}
+                onBack={handleBack}
+                onOpenSettings={() => setShowSettingsModal(true)}
+                typingUsers={typingUsers}
+              />
+            ) : (
+              <Welcome user={user} />
+            )
+          ) : (
+            currentChat ? (
+              <ChatContainer
+                currentChat={currentChat}
+                socket={stompClient}
+                messages={messages}
+                onBack={handleBack}
+                suggestions={suggestions}
+                typingUsers={typingUsers}
+                user={user}
+                sendMessage={sendPrivateMessage}
+              />
+            ) : (
+              <Welcome user={user} />
+            )
+          )}
+        </div>
+      </div>
+
+      {/* Modals */}
       <SearchFriendModal
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
       />
-    </>
+
+      <CreateGroupModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        friends={friends}
+        accessToken={accessToken}
+        onGroupCreated={(newRoom) => {
+          loadRooms();
+          setCurrentRoom(newRoom);
+          if (window.innerWidth <= 768) {
+            setShowContacts(false);
+          }
+        }}
+      />
+
+      <GroupSettings
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        currentRoom={currentRoom}
+        friends={friends}
+        accessToken={accessToken}
+        onRoomUpdated={() => {
+          loadRooms();
+          setCurrentRoom(undefined);
+          setShowSettingsModal(false);
+        }}
+      />
+    </Container>
   );
 }
 
@@ -305,82 +443,81 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 1rem;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem;
-  
+  background-color: #131324;
+
   @media screen and (max-width: 768px) {
+    gap: 0;
     padding: 0;
-    padding-top: 60px; // Space for mobile nav
   }
-  
+
   .container {
-    height: 95vh;
-    width: 95vw;
-    max-width: 1400px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    height: 85vh;
+    width: 85vw;
+    background-color: #00000076;
     display: grid;
-    grid-template-columns: 320px 1fr;
-    overflow: hidden;
+    grid-template-columns: 25% 75%;
     position: relative;
-    
-    @media screen and (max-width: 1080px) {
-      grid-template-columns: 280px 1fr;
-      width: 98vw;
-      height: 92vh;
-    }
-    
+    border-radius: 1rem;
+    overflow: hidden;
+
     @media screen and (max-width: 768px) {
       width: 100vw;
       height: calc(100vh - 60px);
-      border-radius: 0;
+      margin-top: 60px;
       grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+      border-radius: 0;
+    }
+
+    .contacts-panel {
+      background-color: #080420;
       
-      .contacts-panel {
-        display: block !important;
-        width: 100% !important;
-        height: 100% !important;
-        
-        &:not(.show) {
-          // display: none !important;
+      @media screen and (max-width: 768px) {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        transition: transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+        will-change: transform;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        backface-visibility: hidden;
+
+        &.hide {
+          transform: translateX(-100%);
         }
-      }
-      
-      .chat-panel {
-        display: block !important;
-        width: 100% !important;
-        height: 100% !important;
-        
-        &:not(.show) {
-          display: none !important;
+
+        &.show {
+          transform: translateX(0);
         }
       }
     }
-    
-    .connection-status {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 8px 16px;
-      background: ${props => props.connected ? 
-        'linear-gradient(135deg, #4CAF50, #45a049)' : 
-        'linear-gradient(135deg, #f44336, #d32f2f)'};
-      color: white;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      z-index: 1000;
-      backdrop-filter: blur(10px);
-      margin-right: 60px; /* Add space for logout button */
-      
+
+    .chat-panel {
       @media screen and (max-width: 768px) {
-        right: 10px;
-        margin-right: 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 5;
+        transition: transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+        will-change: transform;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        backface-visibility: hidden;
+
+        &.hide {
+          transform: translateX(100%);
+        }
+
+        &.show {
+          transform: translateX(0);
+        }
       }
     }
   }

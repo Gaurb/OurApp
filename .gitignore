@@ -62,6 +62,10 @@ Thumbs.db
 # Node
 node_modules/
 
+# Ignore markdown files
+*.md 
+.mvn
+
 # Test reports
 test-output/
 surefire-reports/
