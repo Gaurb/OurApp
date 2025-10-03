@@ -1,9 +1,12 @@
 package com.gaurav.chat_app_backend.entities;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.AllArgsConstructor;
@@ -18,7 +21,14 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Room {
     @Id
-    private String id;
-    private String roomId;
-    private List<Message>messages =new ArrayList<>();
+    private ObjectId id;
+    @Indexed(unique = true)
+    private String roomName;
+    private String groupPhotoUrl;
+    private boolean isGroupPhotoSet;
+    private List<RoomMember> members = new ArrayList<>();
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
 }

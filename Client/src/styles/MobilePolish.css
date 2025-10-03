@@ -1,0 +1,373 @@
+/* Mobile UI Polish - Smooth Experience */
+
+/* ====== Global Mobile Optimizations ====== */
+@media screen and (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Smooth scrolling */
+  html {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Prevent pull-to-refresh on iOS */
+  body {
+    overscroll-behavior-y: contain;
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+  }
+
+  /* Better font rendering on mobile */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ====== Touch Improvements ====== */
+@media screen and (max-width: 768px) {
+  /* Larger touch targets for buttons */
+  button,
+  a,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+    position: relative;
+  }
+
+  /* Remove hover states on touch devices */
+  button:hover,
+  a:hover {
+    background-color: inherit;
+  }
+
+  /* Add active states for touch feedback */
+  button:active,
+  a:active,
+  .clickable:active {
+    opacity: 0.7;
+    transform: scale(0.96);
+  }
+}
+
+/* ====== Input Field Optimizations ====== */
+@media screen and (max-width: 768px) {
+  input,
+  textarea {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: none;
+    border-color: #4e0eff;
+  }
+}
+
+/* ====== Modal Optimizations ====== */
+@media screen and (max-width: 768px) {
+  /* Modals should be full-screen or near full-screen */
+  [role="dialog"],
+  .modal {
+    max-width: 96vw !important;
+    max-height: 92vh !important;
+    border-radius: 12px;
+    margin: 2vh auto;
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    z-index: 9999;
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* ====== Scroll Optimizations ====== */
+@media screen and (max-width: 768px) {
+  /* Custom scrollbar for webkit browsers */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  /* Prevent overscroll bounce */
+  .scroll-container {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ====== Animation Optimizations ====== */
+@media screen and (max-width: 768px) {
+  /* Use hardware acceleration */
+  .animated,
+  .transition {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Smooth slide animations */
+  .slide-left {
+    animation: slideLeft 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+
+  .slide-right {
+    animation: slideRight 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+
+  @keyframes slideLeft {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideRight {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+}
+
+/* ====== Safe Area Support (Notch Support) ====== */
+@media screen and (max-width: 768px) {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Chat input with safe area */
+  .chat-input-container {
+    padding-bottom: max(0.8rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* ====== Group Chat Specific ====== */
+@media screen and (max-width: 768px) {
+  /* Group list optimizations */
+  .group-item {
+    transition: background-color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .group-item:active {
+    background-color: #4e0eff;
+  }
+
+  /* Message bubbles */
+  .message-bubble {
+    max-width: 85%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Typing indicator */
+  .typing-indicator {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+/* ====== Performance Optimizations ====== */
+@media screen and (max-width: 768px) {
+  /* Reduce animations on low-end devices */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* GPU acceleration for heavy elements */
+  .message-container,
+  .chat-container,
+  .group-list {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+}
+
+/* ====== Loading States ====== */
+@media screen and (max-width: 768px) {
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.1) 25%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0.1) 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+  }
+
+  @keyframes loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}
+
+/* ====== Landscape Mode Optimizations ====== */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  /* Reduce vertical spacing in landscape */
+  .chat-header {
+    padding: 0.5rem 1rem !important;
+  }
+
+  .message-bubble {
+    padding: 0.5rem 0.8rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  .chat-input-container {
+    padding: 0.6rem 1rem !important;
+  }
+
+  /* Hide robot image in landscape for more space */
+  .welcome-robot {
+    display: none !important;
+  }
+}
+
+/* ====== Dark Theme Optimizations ====== */
+@media screen and (max-width: 768px) {
+  /* Better contrast for readability */
+  .text-primary {
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-secondary {
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  /* Better shadows for depth */
+  .card,
+  .modal,
+  .dropdown {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ====== Focus Improvements ====== */
+@media screen and (max-width: 768px) {
+  /* Better focus indicators */
+  input:focus,
+  textarea:focus,
+  button:focus {
+    outline: 2px solid #4e0eff;
+    outline-offset: 2px;
+  }
+
+  /* Remove focus outline on click, keep for keyboard */
+  input:focus:not(:focus-visible),
+  textarea:focus:not(:focus-visible),
+  button:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+/* ====== Utility Classes ====== */
+@media screen and (max-width: 768px) {
+  .mobile-only {
+    display: block !important;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-hide {
+    display: none !important;
+  }
+
+  /* Spacing utilities */
+  .mobile-p-1 {
+    padding: 0.5rem !important;
+  }
+
+  .mobile-p-2 {
+    padding: 1rem !important;
+  }
+
+  .mobile-m-1 {
+    margin: 0.5rem !important;
+  }
+
+  .mobile-m-2 {
+    margin: 1rem !important;
+  }
+
+  /* Text utilities */
+  .mobile-text-sm {
+    font-size: 0.875rem !important;
+  }
+
+  .mobile-text-base {
+    font-size: 1rem !important;
+  }
+
+  .mobile-text-lg {
+    font-size: 1.125rem !important;
+  }
+}
+

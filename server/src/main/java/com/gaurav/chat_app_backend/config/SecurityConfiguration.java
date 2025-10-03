@@ -38,6 +38,7 @@ public class SecurityConfiguration {
                         auth -> auth
                                 .requestMatchers("/gs-guide-websocket/**").permitAll()
                                 .requestMatchers("/api/user/**").hasAuthority("USER")
+                                .requestMatchers("/api/rooms/**").authenticated()
                                 .requestMatchers(
                                         "/api/auth/**",
                                         "/v3/api-docs/**",

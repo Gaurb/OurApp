@@ -1,22 +1,48 @@
 import React, { useState, useRef, useCallback } from "react";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { IoMdSend } from "react-icons/io";
+import { FaMagic } from "react-icons/fa";
 import styled from "styled-components";
 import Picker from "emoji-picker-react";
+import MagicReplies from "./MagicReplies";
 
-export default function ChatInput({ handleSendMsg, currentChat, user, stompClient }) {
+export default function ChatInput({ handleSendMsg, currentChat, user, stompClient, lastMessage, suggestions = [] }) {
   const [msg, setMsg] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showMagicReplies, setShowMagicReplies] = useState(false);
   const typingTimeoutRef = useRef(null);
   const isTypingRef = useRef(false);
   const handleEmojiPickerhideShow = () => {
     setShowEmojiPicker(!showEmojiPicker);
+    setShowMagicReplies(false); // Close magic replies when opening emoji picker
+  };
+
+  const handleMagicRepliesToggle = () => {
+    const newShowState = !showMagicReplies;
+    setShowMagicReplies(newShowState);
+    setShowEmojiPicker(false); // Close emoji picker when opening magic replies
+    
+    // Request suggestions from backend when opening magic replies
+    if (newShowState && stompClient && stompClient.connected && currentChat && user) {
+      const requestData = {
+        sender: user.username,
+        receiver: currentChat.username,
+        lastMessage: lastMessage?.content || ""
+      };
+      
+      stompClient.send("/app/request-suggestions", {}, JSON.stringify(requestData));
+    }
   };
 
   const handleEmojiClick = (_, emojiObject) => {
     let message = msg;
     message += emojiObject.emoji;
     setMsg(message);
+  };
+
+  const handleMagicReplySelect = (reply) => {
+    setMsg(reply);
+    setShowMagicReplies(false);
   };
 
   // Send typing status
@@ -82,12 +108,19 @@ export default function ChatInput({ handleSendMsg, currentChat, user, stompClien
     }
   };
 
+
   return (
     <Container>
       <div className="button-container">
         <div className="emoji">
           <BsEmojiSmileFill onClick={handleEmojiPickerhideShow} />
           {showEmojiPicker && <Picker onEmojiClick={handleEmojiClick} />}
+        </div>
+        <div className="magic-replies">
+          <FaMagic 
+            onClick={handleMagicRepliesToggle} 
+            className={showMagicReplies ? 'active' : ''}
+          />
         </div>
       </div>
       <form className="input-container" onSubmit={(event) => sendChat(event)}>
@@ -103,6 +136,14 @@ export default function ChatInput({ handleSendMsg, currentChat, user, stompClien
           <IoMdSend />
         </button>
       </form>
+      
+      <MagicReplies
+        isVisible={showMagicReplies}
+        onSelectReply={handleMagicReplySelect}
+        lastMessage={lastMessage}
+        onClose={() => setShowMagicReplies(false)}
+        suggestions={suggestions}
+      />
     </Container>
   );
 }
@@ -113,17 +154,21 @@ const Container = styled.div`
   gap: 1rem;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
-  padding: 1.5rem 2rem;
+  padding: 0.8rem 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  min-height: 60px;
   
   @media screen and (max-width: 768px) {
     padding: 1rem;
     gap: 0.8rem;
+    min-height: 65px;
   }
   
   .button-container {
     display: flex;
     align-items: center;
+    gap: 1rem;
     
     .emoji {
       position: relative;
@@ -180,6 +225,31 @@ const Container = styled.div`
         
         .emoji-group:before {
           background: rgba(30, 30, 30, 0.95);
+        }
+      }
+    }
+    
+    .magic-replies {
+      position: relative;
+      
+      svg {
+        font-size: 1.4rem;
+        color: #667eea;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        // padding: 0.5rem;
+        border-radius: 50%;
+        
+        &:hover {
+          background: rgba(102, 126, 234, 0.2);
+          transform: scale(1.1);
+          color: #764ba2;
+        }
+        
+        &.active {
+          background: linear-gradient(135deg, #667eea, #764ba2);
+          color: white;
+          transform: scale(1.1);
         }
       }
     }

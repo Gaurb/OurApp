@@ -3,6 +3,7 @@ import styled from "styled-components";
 import Logo from "../assets/logo.svg";
 import { UserAuth } from "../context/AuthContext";
 import Logout from "./Logout";
+import ChatToggle from "./ChatToggle";
 import defaultAvatar from '../assets/generated-image.png';
 import chatBotAvatar from '../assets/chatbot.png';
 import { FaUserPlus, FaSearch } from "react-icons/fa";
@@ -38,6 +39,7 @@ export default function Contacts({ contacts, changeChat, onShowSearchModal }) {
             <img src={Logo} alt="logo" />
             <h3>OurApp</h3>
           </div>
+          <ChatToggle />
           <div className="search-bar">
             <div className="search-input">
               <FaSearch />
@@ -119,8 +121,8 @@ export default function Contacts({ contacts, changeChat, onShowSearchModal }) {
   );
 }
 const Container = styled.div`
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
@@ -139,6 +141,7 @@ const Container = styled.div`
     gap: 1rem;
     padding: 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
     
     .search-input {
       flex: 1;
@@ -199,6 +202,7 @@ const Container = styled.div`
     justify-content: center;
     padding: 1.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
     
     @media screen and (max-width: 768px) {
       padding: 1rem;
@@ -232,11 +236,14 @@ const Container = styled.div`
     flex-direction: column;
     padding: 1rem;
     overflow-y: auto;
+    overflow-x: hidden;
     gap: 0.5rem;
     flex: 1;
+    min-height: 0;
     
     @media screen and (max-width: 768px) {
       padding: 0.8rem;
+      padding-bottom: 1rem;
       gap: 0.3rem;
     }
     
@@ -392,40 +399,50 @@ const Container = styled.div`
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     align-items: center;
-    padding: 1.5rem;
+    padding: 1rem;
     gap: 1rem;
+    flex-shrink: 0;
     
     @media screen and (max-width: 768px) {
       padding: 1rem;
       gap: 0.8rem;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      margin-bottom: 0;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100vw;
-      z-index: 10;
+      min-height: 70px;
+      background: rgba(30, 30, 30, 0.98);
     }
     
     .avatar {
+      flex-shrink: 0;
+      
       img {
         height: 3.5rem;
         width: 3.5rem;
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid rgba(255, 255, 255, 0.3);
+        
+        @media screen and (max-width: 768px) {
+          height: 2.8rem;
+          width: 2.8rem;
+        }
       }
     }
     
     .username {
       flex: 1;
+      min-width: 0;
       
       h2 {
         color: white;
         font-size: 1.1rem;
         font-weight: 600;
         margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        
+        @media screen and (max-width: 768px) {
+          font-size: 0.95rem;
+        }
       }
     }
     

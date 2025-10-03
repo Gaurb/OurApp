@@ -5,10 +5,16 @@ spring:
   # MongoDB connection properties
   data:
     mongodb:
-      # uri: mongodb://localhost:27017/chat-app
       uri: ${MONGODB_URI:mongodb://localhost:27017/chat-app}
+#      uri: mongodb+srv://arnavchauhan5011:9DRxNm5xKwTjddaM@journal.zcayqt9.mongodb.net/?retryWrites=true&w=majority&appName=journal
       database: ${MONGODB_DATABASE:chat-app}
       auto-index-creation: true
+
+google:
+  api:
+    key: ${GEMINI_API_KEY}
+  gemini:
+    model: ${GEMINI_MODEL_CODE:gemini-2.5-flash-lite}
   
   # Devtools properties
   devtools:

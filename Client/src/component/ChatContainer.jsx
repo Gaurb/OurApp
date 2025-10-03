@@ -5,7 +5,8 @@ import Logout from "./Logout";
 import TypingIndicator from "./TypingIndicator";
 import defaultAvatar from '../assets/generated-image.png';
 
-export default function ChatContainer({ currentChat, messages = [], sendMessage, stompClient, user, typingUsers = [] }) {
+export default function ChatContainer(props) {
+  const { currentChat, messages = [], sendMessage, stompClient, user, typingUsers = [], suggestions = [] } = props;
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
@@ -72,6 +73,11 @@ export default function ChatContainer({ currentChat, messages = [], sendMessage,
   return (
     <Container>
       <div className="chat-header">
+        <button className="back-button" onClick={props.onBack}>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
         <div className="user-details">
           <div className="avatar">
             <img
@@ -123,22 +129,29 @@ export default function ChatContainer({ currentChat, messages = [], sendMessage,
         
         <div ref={messagesEndRef} style={{ height: "1px", width: "100%" }} />
       </div>
-      <ChatInput 
-        handleSendMsg={sendMessage} 
-        currentChat={currentChat}
-        user={user}
-        stompClient={stompClient}
-      />
+      <div className="chat-input-wrapper">
+        <ChatInput 
+          handleSendMsg={sendMessage} 
+          currentChat={currentChat}
+          user={user}
+          stompClient={stompClient}
+          lastMessage={messages.length > 0 ? messages[messages.length - 1] : null}
+          suggestions={suggestions}
+        />
+      </div>
     </Container>
   );
 }
 
 const Container = styled.div`
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   background: rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(10px);
   height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
   
   .chat-header {
     display: flex;
@@ -148,14 +161,68 @@ const Container = styled.div`
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    flex-grow: 0;
+    min-height: 80px;
+    max-height: 80px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    width: 100%;
+    box-sizing: border-box;
+    
+    @media screen and (max-width: 768px) {
+      padding: 0.7rem 1rem;
+      min-height: 60px;
+      max-height: 60px;
+    }
+
+    .back-button {
+      display: none;
+      background: none;
+      border: none;
+      color: #4e0eff;
+      cursor: pointer;
+      padding: 0.5rem;
+      transition: all 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+      margin-right: 0.5rem;
+
+      svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      &:hover {
+        color: #6c3cff;
+        transform: scale(1.1);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      @media screen and (max-width: 768px) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
     
     .user-details {
       display: flex;
       align-items: center;
       gap: 1rem;
+      flex: 1;
+      min-width: 0;
+
+      @media screen and (max-width: 768px) {
+        gap: 0.7rem;
+      }
       
       .avatar {
         position: relative;
+        flex-shrink: 0;
         
         img {
           height: 3rem;
@@ -163,6 +230,11 @@ const Container = styled.div`
           border-radius: 50%;
           object-fit: cover;
           border: 2px solid rgba(255, 255, 255, 0.2);
+
+          @media screen and (max-width: 768px) {
+            height: 2.5rem;
+            width: 2.5rem;
+          }
         }
         
         &::after {
@@ -179,46 +251,81 @@ const Container = styled.div`
       }
       
       .username {
+        flex: 1;
+        min-width: 0;
+
         h3 {
           color: white;
           font-size: 1.2rem;
           font-weight: 600;
           margin: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+
+          @media screen and (max-width: 768px) {
+            font-size: 1rem;
+          }
         }
       }
     }
   }
   
   .chat-messages {
+    flex: 1 1 0;
+    min-height: 0;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     overflow-y: auto;
+    overflow-x: hidden;
     background: rgba(255, 255, 255, 0.02);
-    height: 100%;
-    max-height: calc(100vh - 180px); /* Account for header and input */
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
     scroll-behavior: smooth;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    
+    @media screen and (max-width: 768px) {
+      padding: 1rem;
+      gap: 0.8rem;
+    }
     
     /* For Webkit browsers */
     &::-webkit-scrollbar {
-      width: 6px;
+      width: 8px;
+      
+      @media screen and (max-width: 768px) {
+        width: 4px;
+      }
     }
     
     &::-webkit-scrollbar-track {
       background: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
+      margin: 4px 0;
     }
     
     &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.4);
       border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       
       &:hover {
-        background: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.6);
       }
+      
+      &:active {
+        background: rgba(255, 255, 255, 0.8);
+      }
+    }
+    
+    /* Mobile scroll behavior */
+    @media screen and (max-width: 768px) {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
     
     .message {
@@ -304,5 +411,16 @@ const Container = styled.div`
         }
       }
     }
+  }
+  
+  .chat-input-wrapper {
+    flex-shrink: 0;
+    flex-grow: 0;
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.02);
+    z-index: 50;
+    box-sizing: border-box;
   }
 `;
