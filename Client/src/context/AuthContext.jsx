@@ -6,7 +6,7 @@ const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [accessToken, setAccessToken] = useState(null);
     const [refreshToken, setRefreshToken] = useState(null);
 
@@ -93,6 +93,7 @@ export const AuthContextProvider = ({ children }) => {
         return response;
     } catch (error) {
         console.error('Register failed:', error);
+        throw error;
     }
   }
 

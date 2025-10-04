@@ -45,6 +45,16 @@ export default function Chat() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
 
+  // Debug: Track stompClient changes
+  useEffect(() => {
+    console.log('StompClient state changed:', JSON.stringify({
+      hasStompClient: !!stompClient,
+      isConnected: stompClient?.connected,
+      connected,
+      username: user?.username
+    }, null, 2));
+  }, [stompClient, connected, user]);
+
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
@@ -181,7 +191,10 @@ export default function Chat() {
     };
 
     client.connect(headers, function(frame) {
+      console.log('WebSocket connected successfully!');
       setConnected(true);
+      setStompClient(client);
+      console.log('StompClient set:', { connected: client.connected });
       
       // Subscribe to private messages
       client.subscribe(`/user/${user.username}/queue/private`, function(message) {
@@ -224,37 +237,6 @@ export default function Chat() {
         const suggestions = JSON.parse(message.body);
         setSuggestions(suggestions);
       });
-
-      // Subscribe to group messages if in group mode
-      if (isGroupMode && currentRoom) {
-        client.subscribe(`/topic/room/${currentRoom.roomName}`, function(message) {
-          const groupMessage = JSON.parse(message.body);
-          setMessages(prevMessages => {
-            const currentMessages = Array.isArray(prevMessages) ? prevMessages : [];
-            return [...currentMessages, groupMessage].sort((a, b) => 
-              new Date(a.timestamp) - new Date(b.timestamp)
-            );
-          });
-        });
-
-        // Subscribe to group typing
-        client.subscribe(`/topic/room/${currentRoom.roomName}/typing`, function(message) {
-          const typingStatus = JSON.parse(message.body);
-          
-          setTypingUsers(prevTypingUsers => {
-            if (typingStatus.isTyping && typingStatus.sender !== user.username) {
-              if (!prevTypingUsers.includes(typingStatus.sender)) {
-                return [...prevTypingUsers, typingStatus.sender];
-              }
-            } else {
-              return prevTypingUsers.filter(u => u !== typingStatus.sender);
-            }
-            return prevTypingUsers;
-          });
-        });
-      }
-      
-      setStompClient(client);
     }, function(error) {
       console.error('WebSocket Connection Error:', error);
       setConnected(false);
@@ -268,7 +250,70 @@ export default function Chat() {
         });
       }
     };
-  }, [user, accessToken, currentChat, currentRoom, isGroupMode]);
+  }, [user, accessToken]);
+
+  // Dynamic subscription for group room messages and typing
+  useEffect(() => {
+    if (!stompClient || !stompClient.connected || !currentRoom || !isGroupMode) return;
+
+    console.log('Subscribing to room:', currentRoom.roomName);
+
+    // Subscribe to group messages
+    const messageSubscription = stompClient.subscribe(
+      `/topic/room/${currentRoom.roomName}`, 
+      function(message) {
+        const groupMessage = JSON.parse(message.body);
+        console.log('Received group message:', groupMessage);
+        setMessages(prevMessages => {
+          const currentMessages = Array.isArray(prevMessages) ? prevMessages : [];
+          return [...currentMessages, groupMessage].sort((a, b) => 
+            new Date(a.timestamp) - new Date(b.timestamp)
+          );
+        });
+      }
+    );
+
+    // Subscribe to group typing
+    const typingSubscription = stompClient.subscribe(
+      `/topic/room/${currentRoom.roomName}/typing`, 
+      function(message) {
+        const typingStatus = JSON.parse(message.body);
+        console.log('Received typing status:', typingStatus);
+        console.log('Current user:', user.username);
+        
+        setTypingUsers(prevTypingUsers => {
+          console.log('Previous typing users:', prevTypingUsers);
+          
+          if (typingStatus.isTyping && typingStatus.sender !== user.username) {
+            if (!prevTypingUsers.includes(typingStatus.sender)) {
+              const newTypingUsers = [...prevTypingUsers, typingStatus.sender];
+              console.log('Adding user to typing list. New list:', newTypingUsers);
+              return newTypingUsers;
+            } else {
+              console.log('User already in typing list');
+            }
+          } else {
+            const newTypingUsers = prevTypingUsers.filter(u => u !== typingStatus.sender);
+            console.log('Removing user from typing list. New list:', newTypingUsers);
+            return newTypingUsers;
+          }
+          console.log('No change to typing users');
+          return prevTypingUsers;
+        });
+      }
+    );
+
+    // Cleanup subscriptions when room changes
+    return () => {
+      console.log('Unsubscribing from room:', currentRoom.roomName);
+      if (messageSubscription) {
+        messageSubscription.unsubscribe();
+      }
+      if (typingSubscription) {
+        typingSubscription.unsubscribe();
+      }
+    };
+  }, [stompClient, currentRoom, isGroupMode, user]);
 
   // Handle chat selection
   const handleChatChange = (contact) => {
@@ -335,6 +380,13 @@ export default function Chat() {
     }
   };
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated && !user) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, user, navigate]);
+
   if (!user) {
     return null;
   }
@@ -378,6 +430,7 @@ export default function Chat() {
                 onBack={handleBack}
                 onOpenSettings={() => setShowSettingsModal(true)}
                 typingUsers={typingUsers}
+                stompClient={stompClient}
               />
             ) : (
               <Welcome user={user} />
@@ -386,7 +439,7 @@ export default function Chat() {
             currentChat ? (
               <ChatContainer
                 currentChat={currentChat}
-                socket={stompClient}
+                stompClient={stompClient}
                 messages={messages}
                 onBack={handleBack}
                 suggestions={suggestions}
