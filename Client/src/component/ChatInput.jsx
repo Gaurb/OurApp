@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { IoMdSend } from "react-icons/io";
 import { FaMagic } from "react-icons/fa";
@@ -6,12 +6,28 @@ import styled from "styled-components";
 import Picker from "emoji-picker-react";
 import MagicReplies from "./MagicReplies";
 
-export default function ChatInput({ handleSendMsg, currentChat, user, stompClient, lastMessage, suggestions = [] }) {
+export default function ChatInput({ handleSendMsg, currentChat, currentRoom, user, stompClient, lastMessage, suggestions = [] }) {
   const [msg, setMsg] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showMagicReplies, setShowMagicReplies] = useState(false);
   const typingTimeoutRef = useRef(null);
   const isTypingRef = useRef(false);
+  
+  // Determine if this is a group chat
+  const isGroupChat = !!currentRoom;
+
+  // Debug: Log stompClient status
+  useEffect(() => {
+    console.log('ChatInput - Props:', JSON.stringify({
+      hasStompClient: !!stompClient,
+      isConnected: stompClient?.connected,
+      hasCurrentChat: !!currentChat,
+      hasCurrentRoom: !!currentRoom,
+      currentRoomName: currentRoom?.roomName || 'none',
+      username: user?.username || 'none',
+      isGroupChat
+    }, null, 2));
+  }, [stompClient, currentChat, currentRoom, isGroupChat, user]);
   const handleEmojiPickerhideShow = () => {
     setShowEmojiPicker(!showEmojiPicker);
     setShowMagicReplies(false); // Close magic replies when opening emoji picker
@@ -47,16 +63,32 @@ export default function ChatInput({ handleSendMsg, currentChat, user, stompClien
 
   // Send typing status
   const sendTypingStatus = useCallback((isTyping) => {
-    if (!stompClient || !stompClient.connected || !currentChat || !user) return;
+    if (!stompClient || !stompClient.connected || !user) {
+      console.log('Cannot send typing status: stompClient not connected');
+      return;
+    }
     
-    const typingData = {
-      sender: user.username,
-      receiver: currentChat.username,
-      isTyping: isTyping
-    };
-    
-    stompClient.send("/app/typing-status", {}, JSON.stringify(typingData));
-  }, [stompClient, currentChat, user]);
+    // Check if it's a group chat or private chat
+    if (isGroupChat && currentRoom) {
+      // Group chat typing status
+      const typingData = {
+        sender: user.username,
+        roomName: currentRoom.roomName,
+        isTyping: isTyping
+      };
+      console.log('Sending group typing status:', typingData);
+      stompClient.send("/app/group-typing", {}, JSON.stringify(typingData));
+    } else if (currentChat) {
+      // Private chat typing status
+      const typingData = {
+        sender: user.username,
+        receiver: currentChat.username,
+        isTyping: isTyping
+      };
+      console.log('Sending private typing status:', typingData);
+      stompClient.send("/app/typing-status", {}, JSON.stringify(typingData));
+    }
+  }, [stompClient, currentChat, currentRoom, user, isGroupChat]);
 
   // Handle input change with typing detection
   const handleInputChange = useCallback((e) => {

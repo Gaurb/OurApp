@@ -12,11 +12,17 @@ export default function GroupChatContainer({
   onSendMessage, 
   onBack,
   onOpenSettings,
-  typingUsers = []
+  typingUsers = [],
+  stompClient
 }) {
   const scrollRef = useRef();
   const { user } = UserAuth();
   const [arrivalMessage, setArrivalMessage] = useState(null);
+
+  // Debug: Log typing users whenever they change
+  useEffect(() => {
+    console.log('GroupChatContainer - typingUsers changed:', typingUsers);
+  }, [typingUsers]);
 
   useEffect(() => {
     if (arrivalMessage) {
@@ -167,6 +173,12 @@ export default function GroupChatContainer({
               <p className="members">
                 <FaUsers /> {currentRoom.members?.length || 0} members
               </p>
+              {/* DEBUG: Show typing users */}
+              {typingUsers.length > 0 && (
+                <p style={{color: 'yellow', fontSize: '0.7rem', margin: '0.2rem 0'}}>
+                  DEBUG: Typing users: {JSON.stringify(typingUsers)}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -235,7 +247,12 @@ export default function GroupChatContainer({
         )}
       </div>
 
-      <ChatInput handleSendMsg={handleSendMsg} />
+      <ChatInput 
+        handleSendMsg={handleSendMsg} 
+        currentRoom={currentRoom}
+        user={user}
+        stompClient={stompClient}
+      />
     </Container>
   );
 }
