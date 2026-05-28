@@ -34,27 +34,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String authHeader=request.getHeader("Authorization");
         final String jwtToken;
         final String userName;
-        if(authHeader==null || !authHeader.startsWith("Bearer ")){
-            filterChain.doFilter(request,response);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
             return;
         }
-        jwtToken= authHeader.substring(7);
-        userName= jwtService.extractUsername(jwtToken);
-        if(userName!=null && SecurityContextHolder.getContext().getAuthentication()==null){
-            var UserDetails=this.userDetailsService.loadUserByUsername(userName);
-            if(jwtService.isTokenValid(jwtToken,UserDetails)){
-                var authenticationToken=new UsernamePasswordAuthenticationToken(
-                        UserDetails,
+
+        jwtToken = authHeader.substring(7);
+        userName = jwtService.extractUsername(jwtToken);
+
+        if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            var userDetails = this.userDetailsService.loadUserByUsername(userName);
+            if (jwtService.isTokenValid(jwtToken, userDetails)) {
+                var authenticationToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
                         null,
-                        UserDetails.getAuthorities()
+                        userDetails.getAuthorities()
                 );
-                authenticationToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
-            filterChain.doFilter(request, response);
         }
+
+        // always continue the filter chain after attempting authentication
+        filterChain.doFilter(request, response);
 
     }
 }
