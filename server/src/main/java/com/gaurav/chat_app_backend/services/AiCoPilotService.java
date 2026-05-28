@@ -14,8 +14,8 @@ public class AiCoPilotService {
     private final String apiKey;
     private final String modelName;
 
-    public AiCoPilotService(@Value("${google.api.key}") String apiKey,
-                            @Value("${google.gemini.model}") String modelName) {
+    public AiCoPilotService(@Value("${spring.ai.google.genai.api-key}") String apiKey,
+                            @Value("${spring.ai.google.genai.chat.options.model}") String modelName) {
         this.apiKey = apiKey;
         this.modelName = modelName;
     }

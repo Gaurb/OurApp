@@ -6,6 +6,7 @@ import com.gaurav.chat_app_backend.exception.CustomBusinessException;
 import com.gaurav.chat_app_backend.payload.*;
 import com.gaurav.chat_app_backend.repo.MessageRepository;
 import com.gaurav.chat_app_backend.services.AiCoPilotService;
+import com.gaurav.chat_app_backend.services.RagChatService;
 import com.gaurav.chat_app_backend.services.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class ChatController {
     private final SimpMessagingTemplate messagingTemplate;
     private final AiCoPilotService aiCoPilotService;
     private final RoomService roomService;
+    private final RagChatService ragService;
 
     private static final Logger logger = LoggerFactory.getLogger(ChatController.class);
 
@@ -114,6 +116,10 @@ public class ChatController {
                     .content(savedMessage.getContent())
                     .timestamp(savedMessage.getTimestamp())
                     .build();
+
+            if (groupMessage.getContent().contains("@bot")) {
+                generateAndSendRagResponse(groupMessage);
+            }
             
             // Broadcast to all room members
             logger.info("Broadcasting group message to room: {}", groupMessage.getRoomName());
@@ -265,6 +271,45 @@ public class ChatController {
                     "/queue/suggestions", // A private queue for the user
                     replies // The payload (a list of strings)
             );
+        }
+    }
+
+
+    @Async
+    public void generateAndSendRagResponse(GroupMessageRequest groupMessage) {
+        try {
+            // 1. Clean the prompt so the bot just reads the question
+            String cleanPrompt = groupMessage.getContent().replace("@bot", "").trim();
+
+            // 2. Get AI Response using your ConversationRagService
+            // We pass the roomName as the session ID so it remembers context per room
+            logger.info("Generating RAG response for room: {}", groupMessage.getRoomName());
+            String aiResponse = ragService.generateReply(groupMessage.getRoomName(), cleanPrompt);
+
+            // 3. Save the bot's reply to the database so it appears in chat history
+            Message botMessage = Message.builder()
+                    .sender("OurApp-Bot")
+                    .roomName(groupMessage.getRoomName())
+                    .content(aiResponse)
+                    .messageType(MessageType.GROUP)
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            Message savedBotMessage = messageRepository.save(botMessage);
+
+            // 4. Broadcast the bot's response to the room
+            GroupMessageResponse response = GroupMessageResponse.builder()
+                    .id(savedBotMessage.getId().toString())
+                    .sender(savedBotMessage.getSender())
+                    .roomName(savedBotMessage.getRoomName())
+                    .content(savedBotMessage.getContent())
+                    .timestamp(savedBotMessage.getTimestamp())
+                    .build();
+
+            messagingTemplate.convertAndSend("/topic/room/" + groupMessage.getRoomName(), response);
+        } catch (Exception e) {
+            logger.error("Failed to generate RAG response: {}", e.getMessage());
+            // Optional: You could broadcast an error message back to the chat room here
         }
     }
 }

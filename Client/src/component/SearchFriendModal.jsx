@@ -3,7 +3,7 @@ import styled, { keyframes } from "styled-components";
 import { FaSearch, FaTimes, FaUserPlus, FaSpinner } from "react-icons/fa";
 import axios from "axios";
 import { addFriendRoute, searchFriendRoute,allUsersRoute } from "../utils/APIRoutes";
-import axiosInstance from "../utils/axiosConfig";
+// import axiosInstance from "../utils/axiosConfig";
 import defaultAvatar from '../assets/generated-image.png'
 
 export default function SearchFriendModal({ isOpen, onClose }) {
@@ -41,7 +41,7 @@ export default function SearchFriendModal({ isOpen, onClose }) {
   const handleAddFriend = async (userId) => {
     try {
       setAddingFriends(prev => new Set(prev).add(userId));
-      await axiosInstance.post(`${addFriendRoute}/${userId}`);
+      await axios.post(`${addFriendRoute}/${userId}`);
       setSearchResults(prev => prev.filter(user => user.username !== userId));
     } catch (error) {
       console.error("Error adding friend:", error);

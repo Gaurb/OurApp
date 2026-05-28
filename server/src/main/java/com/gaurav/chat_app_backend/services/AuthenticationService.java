@@ -41,8 +41,8 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .friends(Set.of(perplexingEmail))
                 .role(Role.USER)
-
                 .build();
+
         User saved = userRepository.save(user);
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);

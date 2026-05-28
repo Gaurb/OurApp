@@ -1,0 +1,138 @@
+# Chat Application Knowledge Base
+
+Overview:
+- Purpose: Backend for a real-time chat application (1:1 and room/group chat) using Spring Boot, Spring WebSocket (STOMP over SockJS), MongoDB, JWT authentication, and optional AI integrations.
+- Location: core server code under `src/main/java/com/gaurav/chat_app_backend`.
+
+Core Concepts
+- Users: stored in `users` collection. Key fields: `id`, `username`, `email`, `password` (hashed), `roles`/`authorities`, `friends` (set of User references), `createdAt`, `updatedAt`.
+- Rooms: stored in `rooms` collection. Key fields: `id`, `name`, `members` (list of User refs or embedded objects), `isGroup`, `createdAt`, `updatedAt`, `lastMessage`, `unreadCounts`.
+- Messages: stored in `messages` collection. Key fields: `id`, `sender` (username or user id), `receiver` (username / room id), `content`, `type` (TEXT, IMAGE, SYSTEM), `timestamp`.
+- WebSocket: STOMP endpoint (e.g., `/ws`) with application destination prefix `/app` and user destination prefix `/user`.
+
+Authentication & Authorization
+- JWT-based. Client obtains token via `/api/auth/login` or `/api/auth/register` endpoints.
+- Include header: `Authorization: Bearer <token>` for protected endpoints and WebSocket connect (use `Authorization` header or send token in the CONNECT frame as `auth` header depending on client config).
+- Role check: `SecurityConfiguration` uses `.requestMatchers("/api/user/**").hasAuthority("USER")` — make sure token contains authority `USER` exactly (or change to `hasRole("USER")` if using `ROLE_USER`).
+
+Common Endpoints (examples)
+- POST /api/auth/login
+  Request: { "username":"alice", "password":"password" }
+  Response: { "token":"<jwt>", "username":"alice", "roles":["USER"] }
+
+- POST /api/user/addFriend/{username}
+  - Adds friend with username to the authenticated user’s friends set. Protected: needs `USER` authority.
+  - Ensure request includes Authorization header.
+
+- GET /api/user/searchFriend?username=searchedName
+  - Returns list (Set) of usernames matching the search string excluding the authenticated user.
+
+- GET /api/rooms (example: rooms where current user is a member)
+  - Repository method (Spring Data MongoDB):
+    findByMembersUserUsernameInOrderByUpdatedAtDescCreatedAt(String username)
+  - Controller: extracts current user from SecurityContext and calls service to return rooms where the user is a member.
+
+- POST /app/sendPrivateMessage (STOMP WebSocket)
+  - Message payload example:
+    {
+      "sender":"alice",
+      "receiver":"bob",
+      "content":"Hello Bob",
+      "timestamp":"2026-05-28T10:20:00"
+    }
+  - Backend `@MessageMapping("/sendPrivateMessage")` should use `messagingTemplate.convertAndSendToUser(receiver, "queue/messages", message);`
+
+Sample JSON: "Room list where current user is a member"
+Request (GET): /api/rooms?member=current
+Response:
+[
+  {
+    "id":"64f8a...",
+    "name":"General",
+    "isGroup":true,
+    "members":["alice","bob","charlie"],
+    "lastMessage":"See you later",
+    "updatedAt":"2026-05-27T12:34:56"
+  },
+  {
+    "id":"64f9b...",
+    "name":"alice-bob",
+    "isGroup":false,
+    "members":["alice","bob"],
+    "lastMessage":"Hello Bob",
+    "updatedAt":"2026-05-26T08:00:00"
+  }
+]
+
+Data & Schema Tips
+- Avoid circular references in entities' equals()/hashCode()/toString() — do not include bi-directional collections (like `friends`) in equals/hashCode; use IDs only or exclude the collection.
+- Prefer storing only necessary fields in embedded member objects (e.g., `{ userId, username }`) to avoid deep population and StackOverflow when serializing.
+- Use indexes on `messages` (sender, receiver, timestamp) and on `rooms.members` for efficient queries.
+
+Repository Query Examples
+- Find messages between two users ordered by timestamp ascending:
+  List<Message> findBySenderAndReceiverOrReceiverAndSenderOrderByTimestampAsc(
+      String sender1, String receiver1, String sender2, String receiver2
+  );
+
+- Find rooms where username is a member ordered by latest activity:
+  List<Room> findByMembersUserUsernameInOrderByUpdatedAtDescCreatedAt(String username);
+  (If members are stored as simple username list: List<Room> findByMembersContainingOrderByUpdatedAtDescCreatedAt(String username))
+
+WebSocket (Client-side)
+- Use `@stomp/stompjs` and `sockjs-client` on React.
+- Subscribe to private queue: `/user/queue/messages`.
+- Send to backend: publish to `/app/sendPrivateMessage`.
+
+CORS & Frontend
+- `SecurityConfiguration#corsConfigurationSource` allows `http://localhost:3000`. For fetch/axios calls:
+  - Send `Authorization` header: `Bearer <token>`
+  - If using cookies, set `credentials: 'include'` (fetch) or `withCredentials: true` (axios) and ensure `config.setAllowCredentials(true)` is set server-side.
+
+Running & Packaging
+- Build: `mvn clean package` (use generated jar in `target`)
+- Run: `java -jar target/chat-app-backend-0.0.1-SNAPSHOT.jar`
+- Debug remote attach: `java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -jar target/...jar`
+- Docker: build image in project root (where Dockerfile is):
+  docker build -t chat-app-backend .
+  docker run -p 8080:8080 --env-file .env chat-app-backend
+
+Environment Variables
+- Put `.env` at project root or export system env vars. Typical keys:
+  MONGODB_URI, MONGODB_DATABASE, OPENAI_API_KEY, GOOGLE_CLOUD_PROJECT_ID, GEMINI_API_KEY
+- Spring Boot can reference them in `application.yml` via `${VARIABLE_NAME}`
+
+Common Problems & Fixes
+- No main manifest attribute / NoClassDefFoundError for SpringApplication: build using Spring Boot Maven plugin (`mvn clean package`) and run the produced JAR.
+- MongoDB SRV DNS lookup timeout: verify `MONGODB_URI` is correct (mongodb+srv://...), test SRV resolution (`nslookup -type=SRV _mongodb._tcp.<cluster>.mongodb.net`), ensure Atlas IP access list includes client IP or use non-SRV seed list.
+- StackOverflowError in `User.hashCode()` or `toString()`: remove recursive collections from equals/hashCode/toString (exclude `friends`), or use DTOs when serializing to JSON.
+- Spring AI / OpenAI / Google GenAI autoconfig errors: set API keys (`OPENAI_API_KEY`, `GOOGLE_CLOUD_PROJECT_ID`) or remove/comment AI starter dependencies if not used.
+- Swagger `/v3/api-docs` 500 error: ensure correct `springdoc-openapi-starter-webmvc-ui` version compatible with Spring Boot 3.x and remove older springdoc dependencies.
+
+Troubleshooting Checklist (when 403 or auth fails)
+1. Confirm Authorization header present and token not expired.
+2. Confirm token contains expected authority ("USER").
+3. Inspect server logs for JWT validation errors.
+4. Ensure `JwtAuthenticationFilter` is registered and executes before authentication filter (it is added before `UsernamePasswordAuthenticationFilter`).
+5. For WebSocket auth, confirm token is added to CONNECT headers and server extracts it.
+
+Extending the System
+- Add read receipts: update room `lastRead` timestamps per user.
+- Add presence (online/offline) using WebSocket sessions + Redis for multi-instance.
+- Add message delivery guarantee: sequence numbers, ack messages, and DB write-ahead.
+
+Admin & Maintenance
+- Index rebuild: if `auto-index-creation` fails due to connectivity, temporarily disable (`spring.data.mongodb.auto-index-creation=false`) to allow app to start.
+- Backups: schedule `mongodump` or use Atlas backup snapshots.
+- Monitoring: wire Spring Boot Actuator and Prometheus/Grafana for metrics.
+
+FAQ
+Q: Where to store JWT secret?  A: In environment variable or secrets manager; do not commit to repo.
+Q: How to test WebSocket locally?  A: Use STOMP client (JS) with SockJS or use `websocket.org/echo.html` for low-level tests.
+
+Contact & Notes
+- Keep secrets out of VCS. Use `.env` for local testing and proper secret stores in production.
+- For unit tests, mock external services (Mongo, WebSocket messaging template, AI models).
+
+---
+This knowledge base is intended as a living document — modify and extend with project-specific endpoints, message schemas, and operational runbooks.
