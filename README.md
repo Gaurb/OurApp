@@ -204,4 +204,4 @@ OurApp/
 
 **Gaurav Singh** — Backend Engineer | Java · Spring Boot · Kafka · Microservices · RAG
 
-[LinkedIn](https://www.linkedin.com/in/gauravsingh-5011) · [Resume](https://tinyurl.com/gaurbresume) · [Live Demo](https://ourapp1.netlify.app)
+[LinkedIn](https://www.linkedin.com/in/gaurav-singh-5011) · [Resume](https://tinyurl.com/gaurbresume) · [Live Demo](https://ourapp1.netlify.app)
